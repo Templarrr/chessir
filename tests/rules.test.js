@@ -161,6 +161,16 @@ describe('band rotation as a move', () => {
     expect(rotationBlockReason(state, 1, 1)).toMatch(/expose/);
   });
 
+  it('may not turn the same band straight back after the opponent rotated it', () => {
+    const state = applyAction(newGame(), rotateAction(1, 1));
+    expect(rotationBlockReason(state, 1, -1)).toMatch(/undo/);
+    expect(() => applyAction(state, rotateAction(1, -1))).toThrow();
+    expect(rotationBlockReason(state, 1, 1)).toBeNull();
+    expect(rotationBlockReason(state, 0, -1)).toBeNull();
+    const later = move(state, 'g8', 'f6');
+    expect(rotationBlockReason(later, 1, -1)).toBeNull();
+  });
+
   describe('while in check', () => {
     // Black rook on e8 checks the white king on e1 along the e-file.
     const state = position({ e1: 'wK', e8: 'bR', a8: 'bK', c4: 'wB', f6: 'wN' });
@@ -187,7 +197,13 @@ describe('band rotation as a move', () => {
 describe('draws', () => {
   it('declares a draw on threefold repetition', () => {
     let state = newGame();
-    for (const direction of [1, -1, -1, 1]) state = applyAction(state, rotateAction(1, direction));
+    const shuffle = [
+      ['g1', 'f3'],
+      ['g8', 'f6'],
+      ['f3', 'g1'],
+      ['f6', 'g8'],
+    ];
+    for (const [from, to] of [...shuffle, ...shuffle]) state = move(state, from, to);
     expect(state.result).toMatchObject({ outcome: 'draw', reason: 'threefold repetition' });
   });
 });
