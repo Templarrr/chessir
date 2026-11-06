@@ -210,6 +210,12 @@ export function legalMovesFrom(state, from) {
   );
 }
 
+/** True if this rotation would simply turn back the rotation played on the previous turn. */
+function undoesLastRotation(state, band, direction) {
+  const last = state.lastAction;
+  return last?.type === 'rotate' && last.band === band && last.direction === -direction;
+}
+
 /**
  * Why a band rotation is not allowed right now, or null if it is. In check, the bands
  * holding the king or a checking piece are locked; any other rotation must end the check.
@@ -218,6 +224,9 @@ export function rotationBlockReason(state, band, direction) {
   if (state.result) return 'The game is over';
   const ring = bandSquares(band);
   if (!ring.some((sq) => state.board[sq])) return 'This band is empty';
+  if (undoesLastRotation(state, band, direction)) {
+    return 'This would just undo the last rotation';
+  }
   const locked = [findKing(state.board, state.turn), ...checkers(state)];
   if (locked.length > 1 && locked.some((sq) => ring.includes(sq))) {
     return 'In check: this band holds your king or the checking piece';
@@ -274,7 +283,10 @@ function positionKey(state) {
       }),
     )
     .join('');
-  return `${squares}|${state.turn}|${castling}|${state.enPassant}`;
+  // The blocked reverse rotation changes which turns are available, so it is part of the position.
+  const last = state.lastAction;
+  const blocked = last?.type === 'rotate' ? `${last.band}${last.direction}` : '';
+  return `${squares}|${state.turn}|${castling}|${state.enPassant}|${blocked}`;
 }
 
 function onlyKingsLeft(board) {

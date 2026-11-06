@@ -1,6 +1,6 @@
 /**
  * Everything a player can do on their turn is expressed as one of these plain objects,
- * so human input and a future AI produce exactly the same thing.
+ * so human input and bots produce exactly the same thing.
  *
  * @typedef {{ type: 'move', from: number, to: number, promotion?: string }} MoveAction
  * @typedef {{ type: 'rotate', band: number, direction: 1 | -1 }} RotateAction

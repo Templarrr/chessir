@@ -6,7 +6,8 @@ import { createHighlights } from './render/highlights.js';
 import { onSquareTap } from './render/picking.js';
 import { createPiecesView } from './render/piecesView.js';
 import { createScene } from './render/scene.js';
-import { createHumanPlayer } from './ui/humanPlayer.js';
+import { createHumanPlayer } from './players/human.js';
+import { PLAYER_KINDS } from './players/index.js';
 
 const $ = (id) => document.getElementById(id);
 const status = $('status');
@@ -61,7 +62,43 @@ const human = createHumanPlayer(
   },
   showSelection,
 );
-const players = { white: human, black: human };
+const DEFAULT_KINDS = { white: 'human', black: 'greedy' };
+const players = {};
+
+function savedKind(color) {
+  try {
+    const id = localStorage.getItem(`chessir.player.${color}`);
+    if (PLAYER_KINDS.some((k) => k.id === id)) return id;
+  } catch {
+    // Storage can be unavailable (private mode); fall back to the default.
+  }
+  return DEFAULT_KINDS[color];
+}
+
+function setPlayer(color, id) {
+  const kind = PLAYER_KINDS.find((k) => k.id === id);
+  players[color] = kind.create ? kind.create() : human;
+  try {
+    localStorage.setItem(`chessir.player.${color}`, id);
+  } catch {
+    // Not remembering the choice is fine.
+  }
+}
+
+for (const color of ['white', 'black']) {
+  const select = $(`player-${color}`);
+  select.replaceChildren(...PLAYER_KINDS.map((k) => new Option(k.label, k.id)));
+  select.value = savedKind(color);
+  setPlayer(color, select.value);
+  select.addEventListener('change', () => {
+    setPlayer(color, select.value);
+    // Whoever was asked to move for this side no longer gets a say; ask the new player.
+    if (!state.result && state.turn === color) {
+      human.cancel();
+      play();
+    }
+  });
+}
 
 onSquareTap(
   {
@@ -77,7 +114,9 @@ onSquareTap(
 async function play() {
   const current = ++game;
   while (!state.result) {
-    const action = await players[state.turn].chooseAction(state);
+    const player = players[state.turn];
+    if (player !== human) $('band-name').textContent = `${player.name} is thinking…`;
+    const action = await player.chooseAction(state);
     if (current !== game) return;
     state = applyAction(state, action);
     piecesView.sync(state.board, { animate: true });
