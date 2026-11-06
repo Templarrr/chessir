@@ -15,7 +15,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "eslint . --fix && prettier --write .",
     "test": "vitest run",
-    "check": "npm run lint && npm run test && npm run build"
+    "check": "npm run lint && npm run test && npm run build",
+    "match": "node scripts/match.js"
   },
   "dependencies": {
     "three": "^0.186.1"
