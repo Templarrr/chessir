@@ -4,7 +4,7 @@ Chess where the board itself can turn. Rendered in the browser with [three.js](h
 
 **Play it:** https://templarrr.github.io/chessir/
 
-![A hot-seat game with the moves panel open: two band rotations after a normal opening](docs/screenshots/desktop.png)
+![A hot-seat game after a run of trades: each side's captures stand beside the board, White is a pawn up](docs/screenshots/desktop.png)
 
 ## Rules
 
@@ -53,6 +53,13 @@ As a human:
   counter-clockwise or clockwise (as seen from White's side). If the turn is not allowed, the
   reason appears under the buttons.
 - Drag to orbit the camera, scroll or pinch to zoom.
+
+Captured pieces stand on a ledge beside the board on the side of the player who took them,
+most valuable first (queen, rooks, bishops, knights, pawns), so the material difference is easy
+to see. The side that is ahead also gets a `+N` on its ledge, counted with the piece values
+below (a promoted pawn counts as its new piece). On wide screens the ledges run along the left
+and right of the board, to each player's right; on tall screens they sit in front of and
+behind it.
 
 The **Moves** button on the right shows or hides the game record; **Copy** puts it on the
 clipboard as text, e.g. `1. e4 e5 2. Nf3 Nc6 3. A+ C- 4. Bxf7+`. The panel starts open on wide
@@ -170,6 +177,7 @@ attackers around too much for it to mean anything, so it was dropped.
 - [x] Greedy bot
 - [x] Deep bot (alpha-beta search in a Web Worker)
 - [x] Move record panel with copy to clipboard
+- [x] Captured pieces beside the board, sorted by value, with the material difference
 
 ## Development
 
@@ -193,8 +201,10 @@ Code style is enforced by [ESLint](https://eslint.org/) (correctness) and
 - `src/game/` holds the rules and game state as plain data with no three.js or DOM
   dependencies, so it can be unit-tested and used by a computer player.
   `src/game/rules.js` holds move generation, the rotation rules and game-end detection.
-  `src/game/notation.js` writes moves and rotations as text.
-- `src/render/` turns that state into a three.js scene.
+  `src/game/notation.js` writes moves and rotations as text; `src/game/material.js` works out
+  captured pieces and the material difference.
+- `src/render/` turns that state into a three.js scene; `capturedView.js` draws the captured
+  pieces' ledges.
 - `src/ui/` holds page widgets outside the board, such as the moves panel.
 - `src/players/` holds the players: `human.js` turns taps and button presses into actions,
   `greedy.js` is the greedy bot, `deep.js` runs the Deep bot in a Web Worker, and `index.js`

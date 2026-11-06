@@ -8,7 +8,8 @@ function defaultViewDirection(aspect) {
   return new THREE.Vector3(0, height, 1).normalize();
 }
 
-export function createScene(container, { bounds }) {
+/** `boundsFor(aspect)` returns the box that must stay on screen at that aspect ratio. */
+export function createScene(container, { boundsFor }) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -47,13 +48,12 @@ export function createScene(container, { bounds }) {
     userMovedCamera = true;
   });
 
-  const corners = [];
-  for (const x of [bounds.min.x, bounds.max.x])
-    for (const y of [bounds.min.y, bounds.max.y])
-      for (const z of [bounds.min.z, bounds.max.z]) corners.push(new THREE.Vector3(x, y, z));
-
   // Closest distance along `direction` at which every corner of the bounds is on screen.
-  function fitDistance(direction) {
+  function fitDistance(direction, bounds) {
+    const corners = [];
+    for (const x of [bounds.min.x, bounds.max.x])
+      for (const y of [bounds.min.y, bounds.max.y])
+        for (const z of [bounds.min.z, bounds.max.z]) corners.push(new THREE.Vector3(x, y, z));
     const probe = camera.clone();
     const point = new THREE.Vector3();
     const fits = (distance) => {
@@ -82,7 +82,7 @@ export function createScene(container, { bounds }) {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     const defaultDirection = defaultViewDirection(camera.aspect);
-    const distance = fitDistance(defaultDirection);
+    const distance = fitDistance(defaultDirection, boundsFor(camera.aspect));
     controls.minDistance = distance * 0.45;
     controls.maxDistance = distance * 1.6;
     const direction = userMovedCamera ? camera.position.clone().normalize() : defaultDirection;

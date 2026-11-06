@@ -6,7 +6,8 @@ import { woodMaterial } from './wood.js';
 const HALF = BOARD_SIZE / 2;
 const SQUARE_HEIGHT = 0.2;
 const FRAME_MARGIN = 0.75;
-const FRAME_TOP = -0.06;
+export const FRAME_TOP = -0.06;
+export const FRAME_EDGE = HALF + FRAME_MARGIN;
 
 export function squareToWorld(index) {
   const { file, rank } = squareCoords(index);
@@ -125,7 +126,7 @@ export function createBoardView() {
   const group = new THREE.Group();
   const bands = buildBands();
   group.add(buildFrame(), buildLabels(), buildBandInlays(), ...bands);
-  const edge = HALF + FRAME_MARGIN;
+  const edge = FRAME_EDGE;
   const bounds = new THREE.Box3(
     new THREE.Vector3(-edge, FRAME_TOP - 0.45, -edge),
     new THREE.Vector3(edge, 1.3, edge),
