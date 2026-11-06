@@ -10,6 +10,7 @@ export const PIECE_VALUES = {
   [KING]: 0,
 };
 const CHECKMATE_VALUE = 1000;
+const REPETITION = 'threefold repetition';
 
 const valueOf = (piece) => PIECE_VALUES[piece.type];
 
@@ -45,20 +46,31 @@ function mobility(state, color) {
   );
 }
 
+function advantage(board, color) {
+  return material(board, color) - material(board, opponent(color));
+}
+
+/** Behind on material, a draw is a good result, so repeating the position is fine. */
+export function isLosing(state) {
+  return advantage(state.board, state.turn) < 0;
+}
+
 /**
  * Scores an action for the side to move, compared most significant first:
  * 1. material won now (captures, promotion) minus the value of own pieces left en prise,
  * 2. the best capture it lines up for the next turn,
  * 3. how many squares its pieces can move to afterwards.
+ * Checkmate beats everything; a threefold-repetition draw loses to everything unless the
+ * mover is behind on material.
  */
 export function scoreAction(state, action) {
   const me = state.turn;
   const them = opponent(me);
   const next = applyAction(state, action);
   if (next.result?.outcome === 'checkmate') return [CHECKMATE_VALUE, 0, 0];
+  if (next.result?.reason === REPETITION && !isLosing(state)) return [-CHECKMATE_VALUE, 0, 0];
 
-  const advantage = (board) => material(board, me) - material(board, them);
-  const gained = advantage(next.board) - advantage(state.board);
+  const gained = advantage(next.board, me) - advantage(state.board, me);
   const exposed = losses(next.board, me).reduce((a, b) => a + b, 0);
   const threat = Math.max(0, ...losses(next.board, them));
   return [gained - exposed, threat, mobility(next, me)];

@@ -216,6 +216,95 @@ button.secondary:hover {
   background: #673223;
 }
 
+.notation {
+  position: fixed;
+  top: 50%;
+  right: max(12px, env(safe-area-inset-right));
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4em;
+  font-size: clamp(13px, 1.9vmin, 16px);
+}
+
+/* On a phone the sides of the board reach the screen edge; use the empty space up top. */
+@media (max-width: 699px) {
+  .notation {
+    top: calc(max(12px, env(safe-area-inset-top)) + 6.5em);
+    transform: none;
+  }
+
+  #notation-list {
+    max-height: 30vh;
+    max-height: 30dvh;
+  }
+}
+
+#notation-toggle::after {
+  content: ' ▸';
+}
+
+.notation:not(.open) #notation-toggle::after {
+  content: ' ◂';
+}
+
+.notation-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  width: 11.5em;
+  padding: 0.6em;
+  border-radius: 0.8em;
+  background: rgb(28 18 11 / 0.75);
+}
+
+.notation:not(.open) .notation-body {
+  display: none;
+}
+
+#notation-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 45vh;
+  max-height: 45dvh;
+  overflow-y: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+#notation-list li {
+  display: grid;
+  grid-template-columns: 2.2em 1fr 1fr;
+  gap: 0.3em;
+  padding: 0.1em 0.2em;
+}
+
+#notation-list li:nth-child(even) {
+  background: rgb(241 220 180 / 0.06);
+}
+
+#notation-list .num {
+  opacity: 0.6;
+  text-align: right;
+}
+
+#notation-list .last {
+  color: #f1d59c;
+  font-weight: bold;
+}
+
+#notation-list li.result,
+#notation-list li.empty {
+  display: block;
+  text-align: center;
+  opacity: 0.8;
+}
+
+#notation-copy {
+  align-self: stretch;
+}
+
 [hidden] {
   display: none !important;
 }
