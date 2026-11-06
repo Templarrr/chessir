@@ -210,10 +210,16 @@ export function legalMovesFrom(state, from) {
   );
 }
 
-/** True if this rotation would simply turn back the rotation played on the previous turn. */
-function undoesLastRotation(state, band, direction) {
-  const last = state.lastAction;
-  return last?.type === 'rotate' && last.band === band && last.direction === -direction;
+const sameLayout = (a, b) =>
+  a.every((p, sq) => (p ? b[sq]?.type === p.type && b[sq]?.color === p.color : !b[sq]));
+
+/**
+ * True if this rotation would put every piece back where it stood before the opponent's
+ * last action, e.g. turning a band straight back, or carrying a piece back to where it moved from.
+ */
+function restoresPreviousBoard(state, band, direction) {
+  const before = state.previousBoard;
+  return Boolean(before) && sameLayout(rotateBand(state.board, band, direction), before);
 }
 
 /**
@@ -224,8 +230,8 @@ export function rotationBlockReason(state, band, direction) {
   if (state.result) return 'The game is over';
   const ring = bandSquares(band);
   if (!ring.some((sq) => state.board[sq])) return 'This band is empty';
-  if (undoesLastRotation(state, band, direction)) {
-    return 'This would just undo the last rotation';
+  if (restoresPreviousBoard(state, band, direction)) {
+    return 'This would bring back the position from before the last move';
   }
   const locked = [findKing(state.board, state.turn), ...checkers(state)];
   if (locked.length > 1 && locked.some((sq) => ring.includes(sq))) {
@@ -283,10 +289,14 @@ function positionKey(state) {
       }),
     )
     .join('');
-  // The blocked reverse rotation changes which turns are available, so it is part of the position.
-  const last = state.lastAction;
-  const blocked = last?.type === 'rotate' ? `${last.band}${last.direction}` : '';
-  return `${squares}|${state.turn}|${castling}|${state.enPassant}|${blocked}`;
+  // Rotations blocked by the no-undo rule change which turns are available, so they count.
+  const blocked = [];
+  for (let band = 0; band < BAND_COUNT; band++) {
+    for (const direction of [1, -1]) {
+      if (restoresPreviousBoard(state, band, direction)) blocked.push(`${band}${direction}`);
+    }
+  }
+  return `${squares}|${state.turn}|${castling}|${state.enPassant}|${blocked.join(' ')}`;
 }
 
 function onlyKingsLeft(board) {
@@ -350,6 +360,7 @@ export function applyAction(state, action) {
     moved: Object.freeze([...new Set([...state.moved, ...movedIds])]),
     halfmoveClock: resetsClock ? 0 : state.halfmoveClock + 1,
     lastAction: action,
+    previousBoard: state.board,
   });
   return Object.freeze({ ...next, result: decideResult(next) });
 }

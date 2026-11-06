@@ -17,10 +17,12 @@ While your king is in check you may not rotate a band that holds your king or th
 piece. You may still escape check by rotating another band so that a piece lands between them.
 As with any move, a rotation may never leave your own king in check.
 
-A rotation may not simply undo the one before it: if your opponent has just rotated a band,
-you may not rotate that same band back in the opposite direction on your very next turn.
-Rotating it further in the same direction, or rotating any other band, is fine. Without this
-rule a game could stall forever with one band turning back and forth.
+A rotation may not undo your opponent's last move: you may not rotate a band if that would put
+every piece back exactly where it stood before their move. That covers turning a band straight
+back after your opponent rotated it, and also carrying a piece back with a rotation after it
+moved one square along its band (say a lone pawn on the centre band steps d4-d5, and you turn
+the centre so it lands on d4 again). Any rotation that leads somewhere new is fine. Without this
+rule a game could stall forever with the same two positions taking turns.
 
 Details that follow from the twist:
 
@@ -31,8 +33,8 @@ Details that follow from the twist:
   stays a pawn and cannot move forward until a rotation carries it off again; promotion happens
   only by moving there.
 - An empty band cannot be rotated (that would be a "pass").
-- Because of the no-undo rule, whether that reverse rotation is available is part of the
-  position when counting threefold repetition.
+- Because of the no-undo rule, which rotations it blocks are part of the position when counting
+  threefold repetition.
 - The game ends in checkmate, or in a draw by stalemate, threefold repetition, the fifty-move
   rule, or when only the two kings remain.
 
@@ -62,7 +64,7 @@ screens and closed on phones, and remembers your choice.
 
 ![In check: the king's ring is locked](docs/screenshots/in-check.png)
 
-![White just turned the second ring clockwise, so Black may not turn it straight back](docs/screenshots/no-undo.png)
+![White's lone centre pawn just stepped d4-d5, so Black may not turn the centre band to carry it back](docs/screenshots/no-undo.png)
 
 ## Notation
 
@@ -91,8 +93,14 @@ picks the best by these priorities, in order:
    (counts the difference). So it will not grab a pawn with its queen if the queen is then lost.
 3. If that ties (typically when nothing can be captured), the best capture it lines up for its
    next turn, valued the same way.
-4. If that also ties, the most squares its pieces can move to afterwards.
-5. If still tied, a random pick among the best.
+4. If that also ties, pushing its pawns toward promotion: it prefers the action that leaves its
+   pawns furthest advanced, counting each pawn's squares gained squared, so it keeps pushing its
+   leading pawn rather than nudging a new one each turn. A rotation that carries a pawn forward
+   counts too; a pawn carried onto its last rank, where it is stuck, counts for nothing. Because
+   step 2 comes first, it never pushes a pawn where it can simply be taken unless something
+   equal is won in return.
+5. If that also ties, the most squares its pieces can move to afterwards.
+6. If still tied, a random pick among the best.
 
 It also avoids a draw by threefold repetition: an action that would repeat the position for
 the third time ranks below every other one, so it is played only if nothing else is legal.
