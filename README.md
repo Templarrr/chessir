@@ -11,18 +11,17 @@ Chess where the board itself can turn. Rendered in the browser with [three.js](h
 All classic chess rules apply, plus one extra option. The board is split into four square
 rings ("bands"): the outer ring of 28 squares, then 20, then 12, and the 4 central squares.
 On your turn, instead of moving a piece you may rotate one band by one square in either
-direction; every piece on that band travels with it.
+direction; every piece on that band travels with it. You may only rotate a band that holds at
+least one of your own pieces: a turn of yours should never move only your opponent's pieces.
 
 While your king is in check you may not rotate a band that holds your king or the checking
 piece. You may still escape check by rotating another band so that a piece lands between them.
 As with any move, a rotation may never leave your own king in check.
 
 A rotation may not undo your opponent's last move: you may not rotate a band if that would put
-every piece back exactly where it stood before their move. That covers turning a band straight
-back after your opponent rotated it, and also carrying a piece back with a rotation after it
-moved one square along its band (say a lone pawn on the centre band steps d4-d5, and you turn
-the centre so it lands on d4 again). Any rotation that leads somewhere new is fine. Without this
-rule a game could stall forever with the same two positions taking turns.
+every piece back exactly where it stood before their move. In practice that means turning a band
+straight back right after your opponent rotated it. Any rotation that leads somewhere new is
+fine. Without this rule a game could stall forever with the same two positions taking turns.
 
 Details that follow from the twist:
 
@@ -32,7 +31,8 @@ Details that follow from the twist:
 - A pawn always moves toward the opponent's side. One carried onto its last rank by a rotation
   stays a pawn and cannot move forward until a rotation carries it off again; promotion happens
   only by moving there.
-- An empty band cannot be rotated (that would be a "pass").
+- An empty band cannot be rotated (that would be a "pass"), and neither can one that holds
+  only your opponent's pieces.
 - Because of the no-undo rule, which rotations it blocks are part of the position when counting
   threefold repetition.
 - The game ends in checkmate, or in a draw by stalemate, threefold repetition, the fifty-move
@@ -71,7 +71,9 @@ screens and closed on phones, and remembers your choice.
 
 ![In check: the king's ring is locked](docs/screenshots/in-check.png)
 
-![White's lone centre pawn just stepped d4-d5, so Black may not turn the centre band to carry it back](docs/screenshots/no-undo.png)
+![After 1. e4 the centre band holds only a white pawn, so Black may not turn it](docs/screenshots/own-band.png)
+
+![White just turned band B clockwise, so Black may not turn it straight back](docs/screenshots/no-undo.png)
 
 ## Notation
 
@@ -140,8 +142,8 @@ How it works:
   many squares its pieces reach); pawn structure (passed pawns, doubled and isolated pawns,
   the bishop pair). A pawn carried onto its last rank by a rotation is stuck and counts for
   much less.
-- **Rules.** It follows the full rule set: the no-undo rule, locked bands in check, castling
-  rights lost by rotation, and draws. A draw counts as slightly worse than an even position,
+- **Rules.** It follows the full rule set: the own-piece and no-undo rules for rotations,
+  locked bands in check, castling rights lost by rotation, and draws. A draw counts as slightly worse than an even position,
   so it avoids repeating moves unless it is losing.
 
 How it was chosen: several approaches played each other in bot-vs-bot matches

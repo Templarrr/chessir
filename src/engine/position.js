@@ -410,9 +410,10 @@ export class Position {
     for (let band = 0; band < BAND_COUNT; band++) {
       if (locked & (1 << band)) continue;
       const ring = RINGS[band];
-      let occupied = false;
-      for (let i = 0; i < ring.length && !occupied; i++) occupied = b[ring[i]] !== 0;
-      if (!occupied) continue;
+      let ours = false;
+      for (let i = 0; i < ring.length && !ours; i++)
+        ours = b[ring[i]] !== 0 && (b[ring[i]] & 8) === us;
+      if (!ours) continue;
       for (let d = 0; d < 2; d++) {
         if (!(this.blocked & (1 << (band * 2 + d)))) out[n++] = encode(band, d, 0, ROTATE);
       }

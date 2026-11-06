@@ -230,6 +230,10 @@ export function rotationBlockReason(state, band, direction) {
   if (state.result) return 'The game is over';
   const ring = bandSquares(band);
   if (!ring.some((sq) => state.board[sq])) return 'This band is empty';
+  // Turning a band that carries only enemy pieces would move nothing but theirs.
+  if (!ring.some((sq) => state.board[sq]?.color === state.turn)) {
+    return 'This band holds none of your pieces';
+  }
   if (restoresPreviousBoard(state, band, direction)) {
     return 'This would bring back the position from before the last move';
   }
