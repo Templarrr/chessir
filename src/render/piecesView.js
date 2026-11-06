@@ -74,9 +74,15 @@ export function createPiecesView() {
     let running = false;
     for (const { mesh, from, to, start, hop } of animations) {
       const t = Math.min((now - start) / ANIMATION_MS, 1);
-      mesh.position.lerpVectors(from, to, ease(t));
-      mesh.position.y = Math.sin(Math.PI * t) * hop;
-      if (t < 1) running = true;
+      if (t < 1) {
+        mesh.position.lerpVectors(from, to, ease(t));
+        mesh.position.y = to.y + Math.sin(Math.PI * t) * hop;
+        running = true;
+      } else {
+        // Snap exactly: sin(PI) is not quite 0, and a knight left a hair above its square
+        // would count as "moved" on the next sync and hop again.
+        mesh.position.copy(to);
+      }
     }
     if (!running) {
       animations = [];
