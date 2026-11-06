@@ -1,15 +1,7 @@
 import { BOARD_SIZE, squareCoords } from '../game/board.js';
-import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK, WHITE, opponent } from '../game/pieces.js';
+import { KING, PAWN, PIECE_VALUES, WHITE, opponent } from '../game/pieces.js';
 import { applyAction, attackersOf, legalActions, legalMovesFrom } from '../game/rules.js';
 
-export const PIECE_VALUES = {
-  [PAWN]: 1,
-  [KNIGHT]: 3,
-  [BISHOP]: 3,
-  [ROOK]: 5,
-  [QUEEN]: 9,
-  [KING]: 0,
-};
 const CHECKMATE_VALUE = 1000;
 const REPETITION = 'threefold repetition';
 

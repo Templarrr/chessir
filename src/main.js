@@ -1,8 +1,11 @@
 import './style.css';
 import { bandSquares } from './game/board.js';
 import { notate } from './game/notation.js';
+import { capturedPieces, materialBalance, sortByValue } from './game/material.js';
+import { opponent } from './game/pieces.js';
 import { applyAction, checkers, findKing, newGame } from './game/rules.js';
 import { createBoardView } from './render/boardView.js';
+import { createCapturedView } from './render/capturedView.js';
 import { createHighlights } from './render/highlights.js';
 import { onSquareTap } from './render/picking.js';
 import { createPiecesView } from './render/piecesView.js';
@@ -17,12 +20,18 @@ const status = $('status');
 const boardView = createBoardView();
 const piecesView = createPiecesView();
 const highlights = createHighlights();
-const { scene, camera, renderer, onFrame } = createScene($('app'), { bounds: boardView.bounds });
-scene.add(boardView.group, highlights.group, piecesView.group);
+const capturedView = createCapturedView();
+// Wide screens have room beside the board for the captured pieces, tall ones above and below.
+const { scene, camera, renderer, onFrame } = createScene($('app'), {
+  boundsFor: (aspect) =>
+    boardView.bounds.clone().union(capturedView.setLayout(aspect > 1.15 ? 'sides' : 'ends')),
+});
+scene.add(boardView.group, highlights.group, piecesView.group, capturedView.group);
 onFrame((time) => piecesView.update(time));
 
 let state = newGame();
 let moves = [];
+let captured = { white: [], black: [] };
 let game = 0;
 
 const notation = createNotationPanel({
@@ -46,6 +55,10 @@ function showSelection(selection = {}) {
     check: inCheck ? findKing(state.board, state.turn) : null,
     ...selection,
   });
+}
+
+function showCaptured() {
+  capturedView.show(captured, materialBalance(state.board));
 }
 
 function showStatus() {
@@ -131,9 +144,14 @@ async function play() {
     if (current !== game) return;
     const next = applyAction(state, action);
     moves = [...moves, notate(state, action, next)];
+    for (const piece of capturedPieces(state.board, next.board)) {
+      const by = opponent(piece.color);
+      captured = { ...captured, [by]: sortByValue([...captured[by], piece]) };
+    }
     state = next;
     notation.show(moves, state.result);
     piecesView.sync(state.board, { animate: true });
+    showCaptured();
     showStatus();
     showSelection();
   }
@@ -144,8 +162,10 @@ function startGame() {
   for (const player of Object.values(players)) if (player !== human) player.cancel?.();
   state = newGame();
   moves = [];
+  captured = { white: [], black: [] };
   notation.show(moves, null);
   piecesView.sync(state.board);
+  showCaptured();
   showStatus();
   showSelection();
   play();
