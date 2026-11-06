@@ -43,7 +43,7 @@ Details that follow from the twist:
 Pick who plays each side with the **White** and **Black** selectors at the top: a human or one
 of the bots. Two humans play hot-seat on one screen; two bots play each other. The choice is
 remembered and can be changed mid-game; if it is that side's turn, the new player takes over
-right away. By default you play White against the greedy bot.
+right away. By default you play White against the greedy bot; pick the Deep bot for a real fight.
 
 As a human:
 
@@ -109,6 +109,58 @@ is a fine result and repetition is treated like any other move.
 
 Piece values: pawn 1, knight 3, bishop 3, rook 5, queen 9.
 
+**Deep bot** is the strong one. It searches ahead the way chess engines do, and band rotations
+are ordinary moves to it, so it plans rotation tricks of its own and sees yours coming. It
+thinks for up to 10 seconds per move (usually 4 to 8, less when the move is forced or it finds
+a mate) in a background thread, so the board stays responsive meanwhile. About a third of its
+moves are rotations.
+
+![The Deep bot (Black) thinking against the greedy bot, with plenty of rotations on the record](docs/screenshots/deep-bot.png)
+
+How it works:
+
+- **Search.** Alpha-beta minimax with iterative deepening: it looks 1 turn ahead, then 2, then
+  3, and so on until its time is up, and plays the best move of the deepest search it finished
+  (about 11 half-moves deep in the opening after 2.5 seconds on a laptop). Lines that cannot
+  beat a move already found are cut off; unpromising moves get a shallower look (null-move
+  pruning, late-move reductions). Positions already analysed are remembered, also from earlier
+  turns, which matters here because rotations reach the same position many ways.
+- **Quiet positions only.** At the end of each line it keeps playing captures until none are
+  left (quiescence search), so it never judges a position in the middle of a trade. In check
+  it looks at every reply, rotations included.
+- **Scoring a position** (in pawns): material (pawn 1, knight 3.2, bishop 3.3, rook 5, queen
+  9.5); piece placement (centralised pieces and advanced pawns are worth more); mobility (how
+  many squares its pieces reach); pawn structure (passed pawns, doubled and isolated pawns,
+  the bishop pair). A pawn carried onto its last rank by a rotation is stuck and counts for
+  much less.
+- **Rules.** It follows the full rule set: the no-undo rule, locked bands in check, castling
+  rights lost by rotation, and draws. A draw counts as slightly worse than an even position,
+  so it avoids repeating moves unless it is losing.
+
+How it was chosen: several approaches played each other in bot-vs-bot matches
+(`npm run match -- <botA> <botB> --games 40 --ms 200`, variants in `scripts/bots.js`). Each
+match pairs games from the same random opening with colours swapped.
+
+| Match (40 games, 0.2 s per move unless noted)               | Result for the first bot |
+| ----------------------------------------------------------- | ------------------------ |
+| Deep bot vs Greedy bot (20 games, 1 s per move)             | +20 =0 −0                |
+| First search version vs Greedy bot (20 games, 0.1 s)        | +20 =0 −0                |
+| First version vs Monte Carlo tree search                    | +40 =0 −0                |
+| First version vs the same search scoring material only      | +36 =1 −3                |
+| First version vs the same search never rotating             | +35 =5 −0                |
+| First version vs the same search without pruning            | +23 =7 −10               |
+| First version vs the same without classic king safety       | +12 =8 −20               |
+| No king safety vs the same keeping its memory between moves | +10 =7 −23               |
+| No king safety vs the same with mobility counted double     | +14 =7 −19               |
+| Deep bot (all three changes) vs no-king-safety version      | +22 =8 −10               |
+| Deep bot vs memory-only version                             | +18 =9 −13               |
+| Deep bot vs first version (20 games, 1 s per move)          | +11 =3 −6                |
+
+Monte Carlo tree search (scoring new positions by playing out captures, since random games of
+Chessir say little) lost every game to alpha-beta. Classic chess king safety (penalising enemy
+pieces next to the king) made the bot weaker, probably because rotations carry kings and
+attackers around too much for it to mean anything, so it was dropped.
+
 ## Status
 
 - [x] 3D board and pieces, scales to any window size
@@ -116,6 +168,7 @@ Piece values: pawn 1, knight 3, bishop 3, rook 5, queen 9.
 - [x] Rules enforcement (check, mate, special moves, draws)
 - [x] Player picker: human or bot for each side
 - [x] Greedy bot
+- [x] Deep bot (alpha-beta search in a Web Worker)
 - [x] Move record panel with copy to clipboard
 
 ## Development
@@ -144,8 +197,13 @@ Code style is enforced by [ESLint](https://eslint.org/) (correctness) and
 - `src/render/` turns that state into a three.js scene.
 - `src/ui/` holds page widgets outside the board, such as the moves panel.
 - `src/players/` holds the players: `human.js` turns taps and button presses into actions,
-  `greedy.js` is the greedy bot, and `index.js` lists what the side pickers offer. A new bot is
-  a new file there plus one line in `index.js`.
+  `greedy.js` is the greedy bot, `deep.js` runs the Deep bot in a Web Worker, and `index.js`
+  lists what the side pickers offer. A new bot is a new file there plus one line in `index.js`.
+- `src/engine/` is the Deep bot's engine: `position.js` is a fast mutable copy of the rules
+  (tests check it matches `src/game/rules.js` move for move), `search.js` the search,
+  `evaluate.js` the scoring and `worker.js` the Web Worker entry.
+- `scripts/match.js` plays bot-vs-bot matches (`npm run match`), checking every move with the
+  real rules.
 - `src/game/actions.js` defines the two kinds of turn (`move`, `rotate`) and the `Player`
   contract: anything with `chooseAction(state) => Promise<Action>`. Humans and bots both plug in
   through it.

@@ -1,3 +1,4 @@
+import { createDeepBot } from './deep.js';
 import { createGreedyBot } from './greedy.js';
 
 /**
@@ -7,4 +8,5 @@ import { createGreedyBot } from './greedy.js';
 export const PLAYER_KINDS = [
   { id: 'human', label: 'Human' },
   { id: 'greedy', label: 'Greedy bot', create: () => createGreedyBot() },
+  { id: 'deep', label: 'Deep bot', create: () => createDeepBot() },
 ];

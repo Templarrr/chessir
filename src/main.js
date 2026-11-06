@@ -87,6 +87,7 @@ function savedKind(color) {
 
 function setPlayer(color, id) {
   const kind = PLAYER_KINDS.find((k) => k.id === id);
+  if (players[color] !== human) players[color]?.cancel?.();
   players[color] = kind.create ? kind.create() : human;
   try {
     localStorage.setItem(`chessir.player.${color}`, id);
@@ -140,6 +141,7 @@ async function play() {
 
 function startGame() {
   human.cancel();
+  for (const player of Object.values(players)) if (player !== human) player.cancel?.();
   state = newGame();
   moves = [];
   notation.show(moves, null);
