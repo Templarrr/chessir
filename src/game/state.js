@@ -20,7 +20,18 @@ export function createInitialState() {
     place(file, 7, BACK_RANK[file], BLACK);
   }
 
-  return Object.freeze({ board: Object.freeze(board), turn: WHITE });
+  return Object.freeze({
+    board: Object.freeze(board),
+    turn: WHITE,
+    // Square a pawn just skipped with its double step, capturable en passant this turn.
+    enPassant: null,
+    // Ids of pieces that ever left their square, by move or rotation; used for castling.
+    moved: Object.freeze([]),
+    halfmoveClock: 0,
+    positions: {},
+    lastAction: null,
+    result: null,
+  });
 }
 
 export function pieceAt(state, index) {

@@ -12,6 +12,16 @@
       <h1>Chessir</h1>
       <span id="status"></span>
     </div>
+    <div class="controls">
+      <div class="band-controls">
+        <button id="rotate-ccw" type="button" aria-label="Turn counter-clockwise" hidden>↺</button>
+        <span id="band-name"></span>
+        <button id="rotate-cw" type="button" aria-label="Turn clockwise" hidden>↻</button>
+      </div>
+      <p id="band-note" hidden></p>
+      <div id="promotion" class="promotion" hidden></div>
+      <button id="new-game" type="button" class="secondary">New game</button>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
