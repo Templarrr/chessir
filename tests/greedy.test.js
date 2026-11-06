@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { rotateAction } from '../src/game/actions.js';
+import { moveAction, rotateAction } from '../src/game/actions.js';
 import { parseSquare, squareName } from '../src/game/board.js';
 import { BLACK, WHITE } from '../src/game/pieces.js';
 import { applyAction, legalActions, newGame } from '../src/game/rules.js';
 import { createInitialState } from '../src/game/state.js';
-import { chooseGreedyAction } from '../src/players/greedy.js';
+import { chooseGreedyAction, scoreAction } from '../src/players/greedy.js';
 
 const TYPES = { K: 'king', Q: 'queen', R: 'rook', B: 'bishop', N: 'knight', P: 'pawn' };
 
@@ -23,6 +23,14 @@ function position(pieces, turn = WHITE) {
 const describeMove = (a) =>
   a.type === 'move' ? `${squareName(a.from)}${squareName(a.to)}` : `rotate ${a.band}`;
 const pick = (state, random) => describeMove(chooseGreedyAction(state, random));
+
+const knightShuffle = ['g1f3', 'g8f6', 'f3g1', 'f6g8', 'g1f3', 'g8f6', 'f3g1'];
+function play(state, moves) {
+  return moves.reduce(
+    (s, m) => applyAction(s, moveAction(parseSquare(m.slice(0, 2)), parseSquare(m.slice(2)))),
+    state,
+  );
+}
 
 describe('greedy bot', () => {
   it('takes the most valuable piece on offer', () => {
@@ -70,5 +78,25 @@ describe('greedy bot', () => {
     const state = applyAction(newGame(), rotateAction(1, 1));
     const action = chooseGreedyAction(state);
     expect(legalActions(state)).toContainEqual(action);
+  });
+
+  it('avoids a threefold repetition draw when not behind', () => {
+    // Nf6-g8 now would bring back the start position for the third time.
+    const state = play(newGame(), knightShuffle);
+    const back = moveAction(parseSquare('f6'), parseSquare('g8'));
+    expect(applyAction(state, back).result?.reason).toBe('threefold repetition');
+    expect(scoreAction(state, back)[0]).toBeLessThan(0);
+    expect(chooseGreedyAction(state)).not.toEqual(back);
+  });
+
+  it('does not mind a repetition draw when behind on material', () => {
+    // White is a rook down; Ng1-f3 now would repeat the position after White's first move twice.
+    const start = createInitialState();
+    const board = start.board.slice();
+    board[parseSquare('a1')] = null;
+    const state = play({ ...start, board }, [...knightShuffle, 'f6g8']);
+    const out = moveAction(parseSquare('g1'), parseSquare('f3'));
+    expect(applyAction(state, out).result?.reason).toBe('threefold repetition');
+    expect(scoreAction(state, out)[0]).toBeGreaterThanOrEqual(0);
   });
 });

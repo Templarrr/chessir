@@ -4,7 +4,7 @@ Chess where the board itself can turn. Rendered in the browser with [three.js](h
 
 **Play it:** https://templarrr.github.io/chessir/
 
-![Playing White against the greedy bot, the g1 knight selected](docs/screenshots/desktop.png)
+![A hot-seat game with the moves panel open: two band rotations after a normal opening](docs/screenshots/desktop.png)
 
 ## Rules
 
@@ -52,11 +52,32 @@ As a human:
   reason appears under the buttons.
 - Drag to orbit the camera, scroll or pinch to zoom.
 
-| Phone                                                 | In check: the king's ring is locked                         |
-| ----------------------------------------------------- | ----------------------------------------------------------- |
-| ![Phone layout](docs/screenshots/mobile-portrait.png) | ![Rotation blocked in check](docs/screenshots/in-check.png) |
+The **Moves** button on the right shows or hides the game record; **Copy** puts it on the
+clipboard as text, e.g. `1. e4 e5 2. Nf3 Nc6 3. A+ C- 4. Bxf7+`. The panel starts open on wide
+screens and closed on phones, and remembers your choice.
+
+| Phone                                                 | Phone, moves panel open                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------ |
+| ![Phone layout](docs/screenshots/mobile-portrait.png) | ![Moves panel on a phone](docs/screenshots/mobile-moves.png) |
+
+![In check: the king's ring is locked](docs/screenshots/in-check.png)
 
 ![White just turned the second ring clockwise, so Black may not turn it straight back](docs/screenshots/no-undo.png)
+
+## Notation
+
+Normal moves use standard algebraic notation (`e4`, `Nbd2`, `exd6`, `O-O`, `e8=Q`).
+
+A band rotation is written as the band's letter plus a direction. Each band is named after the
+first file it covers: **A** is the outer ring (it covers file a), then **B**, **C**, and **D**
+for the four central squares. `+` means the band's squares on that file move toward higher rank
+numbers, `-` toward lower ones. Seen from White's side, `+` is clockwise (↻) and `-` is
+counter-clockwise (↺). So `A+` carries the rook on a1 up to a2 and `D-` turns the centre so
+that a piece on d5 goes to d4.
+
+As with any move, `+` is added if the rotation gives check and `#` if it mates, so a rotation
+that gives check reads `A++` or `B-+`. The copied record ends with `1-0`, `0-1` or `1/2-1/2`
+once the game is over.
 
 ## Bots
 
@@ -73,6 +94,11 @@ picks the best by these priorities, in order:
 4. If that also ties, the most squares its pieces can move to afterwards.
 5. If still tied, a random pick among the best.
 
+It also avoids a draw by threefold repetition: an action that would repeat the position for
+the third time ranks below every other one, so it is played only if nothing else is legal.
+The exception is when the bot is behind on material (by the piece values below); then a draw
+is a fine result and repetition is treated like any other move.
+
 Piece values: pawn 1, knight 3, bishop 3, rook 5, queen 9.
 
 ## Status
@@ -82,6 +108,7 @@ Piece values: pawn 1, knight 3, bishop 3, rook 5, queen 9.
 - [x] Rules enforcement (check, mate, special moves, draws)
 - [x] Player picker: human or bot for each side
 - [x] Greedy bot
+- [x] Move record panel with copy to clipboard
 
 ## Development
 
@@ -105,7 +132,9 @@ Code style is enforced by [ESLint](https://eslint.org/) (correctness) and
 - `src/game/` holds the rules and game state as plain data with no three.js or DOM
   dependencies, so it can be unit-tested and used by a computer player.
   `src/game/rules.js` holds move generation, the rotation rules and game-end detection.
+  `src/game/notation.js` writes moves and rotations as text.
 - `src/render/` turns that state into a three.js scene.
+- `src/ui/` holds page widgets outside the board, such as the moves panel.
 - `src/players/` holds the players: `human.js` turns taps and button presses into actions,
   `greedy.js` is the greedy bot, and `index.js` lists what the side pickers offer. A new bot is
   a new file there plus one line in `index.js`.

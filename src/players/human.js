@@ -1,5 +1,6 @@
 import { moveAction, rotateAction } from '../game/actions.js';
 import { bandOf } from '../game/board.js';
+import { BAND_LETTERS, bandMoveName } from '../game/notation.js';
 import { PROMOTIONS, legalMovesFrom, rotationBlockReason } from '../game/rules.js';
 
 const BAND_NAMES = ['outer ring', 'second ring', 'third ring', 'centre'];
@@ -30,7 +31,9 @@ export function createHumanPlayer(ui, onSelection) {
     onSelection({ band: band(), selected, targets });
 
     const active = resolve !== null && band() !== null;
-    ui.bandName.textContent = active ? `Turn the ${BAND_NAMES[band()]}` : HINT;
+    ui.bandName.textContent = active
+      ? `Turn band ${BAND_LETTERS[band()]} · ${BAND_NAMES[band()]}`
+      : HINT;
     let note = '';
     for (const [button, direction] of [
       [ui.rotateCounterClockwise, -1],
@@ -41,7 +44,7 @@ export function createHumanPlayer(ui, onSelection) {
         : 'Select a square first';
       button.disabled = reason !== null;
       button.hidden = !active;
-      button.title = reason ?? '';
+      button.title = reason ?? (active ? bandMoveName(band(), direction) : '');
       if (active && reason) note = reason;
     }
     ui.bandNote.textContent = note;

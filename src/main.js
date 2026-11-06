@@ -1,5 +1,6 @@
 import './style.css';
 import { bandSquares } from './game/board.js';
+import { notate } from './game/notation.js';
 import { applyAction, checkers, findKing, newGame } from './game/rules.js';
 import { createBoardView } from './render/boardView.js';
 import { createHighlights } from './render/highlights.js';
@@ -8,6 +9,7 @@ import { createPiecesView } from './render/piecesView.js';
 import { createScene } from './render/scene.js';
 import { createHumanPlayer } from './players/human.js';
 import { PLAYER_KINDS } from './players/index.js';
+import { createNotationPanel } from './ui/notationPanel.js';
 
 const $ = (id) => document.getElementById(id);
 const status = $('status');
@@ -20,7 +22,15 @@ scene.add(boardView.group, highlights.group, piecesView.group);
 onFrame((time) => piecesView.update(time));
 
 let state = newGame();
+let moves = [];
 let game = 0;
+
+const notation = createNotationPanel({
+  panel: $('notation'),
+  toggle: $('notation-toggle'),
+  list: $('notation-list'),
+  copy: $('notation-copy'),
+});
 
 const capitalize = (s) => s[0].toUpperCase() + s.slice(1);
 
@@ -118,7 +128,10 @@ async function play() {
     if (player !== human) $('band-name').textContent = `${player.name} is thinking…`;
     const action = await player.chooseAction(state);
     if (current !== game) return;
-    state = applyAction(state, action);
+    const next = applyAction(state, action);
+    moves = [...moves, notate(state, action, next)];
+    state = next;
+    notation.show(moves, state.result);
     piecesView.sync(state.board, { animate: true });
     showStatus();
     showSelection();
@@ -128,6 +141,8 @@ async function play() {
 function startGame() {
   human.cancel();
   state = newGame();
+  moves = [];
+  notation.show(moves, null);
   piecesView.sync(state.board);
   showStatus();
   showSelection();
