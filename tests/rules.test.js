@@ -171,16 +171,17 @@ describe('band rotation as a move', () => {
     expect(rotationBlockReason(later, 1, -1)).toBeNull();
   });
 
-  it('may not rotate a lone piece back to where the opponent just moved it from', () => {
-    // The rook is the only piece on the outer band; turning it back would restore the old board.
+  it('may only rotate a band that holds at least one of the own pieces', () => {
+    // After a1-a2 the white rook is alone on the outer band, so Black may not turn it.
     const state = move(position({ a1: 'wR', d3: 'wK', e6: 'bK' }), 'a1', 'a2');
-    expect(rotationBlockReason(state, 0, -1)).toMatch(/before the last move/);
-    expect(rotationBlockReason(state, 0, 1)).toBeNull();
+    expect(rotationBlockReason(state, 0, -1)).toMatch(/none of your pieces/);
+    expect(rotationBlockReason(state, 0, 1)).toMatch(/none of your pieces/);
+    expect(legalRotations(state).map((r) => r.band)).toEqual([2, 2]);
   });
 
   it('allows rotations that cannot restore the old board', () => {
     // Two squares up the band is out of reach of a one-square turn.
-    const state = move(position({ a1: 'wR', d3: 'wK', e6: 'bK' }), 'a1', 'a3');
+    const state = move(position({ a1: 'wR', d3: 'wK', h8: 'bK' }), 'a1', 'a3');
     expect(rotationBlockReason(state, 0, -1)).toBeNull();
   });
 
