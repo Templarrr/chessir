@@ -62,7 +62,7 @@ export function createScene(container, { bounds }) {
       probe.updateMatrixWorld();
       return corners.every((corner) => {
         point.copy(corner).project(probe);
-        return Math.abs(point.x) <= 0.96 && point.y <= 0.84 && point.y >= -0.96;
+        return Math.abs(point.x) <= 0.96 && point.y <= 0.84 && point.y >= -0.74;
       });
     };
     let near = 1;
@@ -93,10 +93,13 @@ export function createScene(container, { bounds }) {
   new ResizeObserver(resize).observe(container);
   resize();
 
-  renderer.setAnimationLoop(() => {
+  const frameListeners = [];
+  renderer.setAnimationLoop((time) => {
+    for (const listener of frameListeners) listener(time);
     controls.update();
     renderer.render(scene, camera);
   });
 
-  return { scene, camera, renderer, controls };
+  const onFrame = (listener) => frameListeners.push(listener);
+  return { scene, camera, renderer, controls, onFrame };
 }
