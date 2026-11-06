@@ -1,4 +1,5 @@
-import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK, opponent } from '../game/pieces.js';
+import { BOARD_SIZE, squareCoords } from '../game/board.js';
+import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK, WHITE, opponent } from '../game/pieces.js';
 import { applyAction, attackersOf, legalActions, legalMovesFrom } from '../game/rules.js';
 
 export const PIECE_VALUES = {
@@ -46,6 +47,20 @@ function mobility(state, color) {
   );
 }
 
+/**
+ * How far `color`'s pawns have come toward promotion. Squared, so pushing the leading pawn
+ * on beats nudging a new one. A pawn carried onto its last rank by a rotation is stuck, so it
+ * counts for nothing.
+ */
+export function pawnProgress(board, color) {
+  return board.reduce((sum, p, sq) => {
+    if (!p || p.type !== PAWN || p.color !== color) return sum;
+    const { rank } = squareCoords(sq);
+    const steps = color === WHITE ? rank - 1 : BOARD_SIZE - 2 - rank;
+    return steps > 0 && steps < BOARD_SIZE - 2 ? sum + steps * steps : sum;
+  }, 0);
+}
+
 function advantage(board, color) {
   return material(board, color) - material(board, opponent(color));
 }
@@ -59,7 +74,8 @@ export function isLosing(state) {
  * Scores an action for the side to move, compared most significant first:
  * 1. material won now (captures, promotion) minus the value of own pieces left en prise,
  * 2. the best capture it lines up for the next turn,
- * 3. how many squares its pieces can move to afterwards.
+ * 3. how far its pawns get toward promotion (a pawn left to be taken already lost on 1.),
+ * 4. how many squares its pieces can move to afterwards.
  * Checkmate beats everything; a threefold-repetition draw loses to everything unless the
  * mover is behind on material.
  */
@@ -67,13 +83,13 @@ export function scoreAction(state, action) {
   const me = state.turn;
   const them = opponent(me);
   const next = applyAction(state, action);
-  if (next.result?.outcome === 'checkmate') return [CHECKMATE_VALUE, 0, 0];
-  if (next.result?.reason === REPETITION && !isLosing(state)) return [-CHECKMATE_VALUE, 0, 0];
+  if (next.result?.outcome === 'checkmate') return [CHECKMATE_VALUE, 0, 0, 0];
+  if (next.result?.reason === REPETITION && !isLosing(state)) return [-CHECKMATE_VALUE, 0, 0, 0];
 
   const gained = advantage(next.board, me) - advantage(state.board, me);
   const exposed = losses(next.board, me).reduce((a, b) => a + b, 0);
   const threat = Math.max(0, ...losses(next.board, them));
-  return [gained - exposed, threat, mobility(next, me)];
+  return [gained - exposed, threat, pawnProgress(next.board, me), mobility(next, me)];
 }
 
 function compare(a, b) {

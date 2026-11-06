@@ -163,12 +163,25 @@ describe('band rotation as a move', () => {
 
   it('may not turn the same band straight back after the opponent rotated it', () => {
     const state = applyAction(newGame(), rotateAction(1, 1));
-    expect(rotationBlockReason(state, 1, -1)).toMatch(/undo/);
+    expect(rotationBlockReason(state, 1, -1)).toMatch(/before the last move/);
     expect(() => applyAction(state, rotateAction(1, -1))).toThrow();
     expect(rotationBlockReason(state, 1, 1)).toBeNull();
     expect(rotationBlockReason(state, 0, -1)).toBeNull();
     const later = move(state, 'g8', 'f6');
     expect(rotationBlockReason(later, 1, -1)).toBeNull();
+  });
+
+  it('may not rotate a lone piece back to where the opponent just moved it from', () => {
+    // The rook is the only piece on the outer band; turning it back would restore the old board.
+    const state = move(position({ a1: 'wR', d3: 'wK', e6: 'bK' }), 'a1', 'a2');
+    expect(rotationBlockReason(state, 0, -1)).toMatch(/before the last move/);
+    expect(rotationBlockReason(state, 0, 1)).toBeNull();
+  });
+
+  it('allows rotations that cannot restore the old board', () => {
+    // Two squares up the band is out of reach of a one-square turn.
+    const state = move(position({ a1: 'wR', d3: 'wK', e6: 'bK' }), 'a1', 'a3');
+    expect(rotationBlockReason(state, 0, -1)).toBeNull();
   });
 
   describe('while in check', () => {

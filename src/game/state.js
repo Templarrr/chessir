@@ -30,6 +30,8 @@ export function createInitialState() {
     halfmoveClock: 0,
     positions: {},
     lastAction: null,
+    // Board before lastAction; a rotation may not bring it back.
+    previousBoard: null,
     result: null,
   });
 }

@@ -68,10 +68,25 @@ describe('greedy bot', () => {
   });
 
   it('breaks ties at random among equally good actions', () => {
-    // Kd2, Ke2 and Kf2 all leave the white pieces with 12 squares to go to.
+    // a4 and h4 advance a pawn equally far and leave the same number of moves.
     const state = position({ e1: 'wK', e8: 'bK', a2: 'wP', h2: 'wP' });
-    const picks = new Set([0, 0.5, 0.99].map((r) => pick(state, () => r)));
-    expect(picks).toEqual(new Set(['e1f2', 'e1e2', 'e1d2']));
+    const picks = new Set([0, 0.99].map((r) => pick(state, () => r)));
+    expect(picks).toEqual(new Set(['a2a4', 'h2h4']));
+  });
+
+  it('pushes its most advanced pawn toward promotion when nothing else is going on', () => {
+    // b5-b6, or turning the band that carries b5 up to b6, beats a g-pawn step.
+    const state = position({ h1: 'wK', a8: 'bK', b5: 'wP', g2: 'wP' });
+    const next = applyAction(state, chooseGreedyAction(state));
+    expect(next.board[parseSquare('b6')]?.type).toBe('pawn');
+  });
+
+  it('does not push a pawn where it would just be taken', () => {
+    // b6 is covered by the a7 pawn; the g-pawn can advance safely instead.
+    const state = position({ h1: 'wK', a8: 'bK', b5: 'wP', g2: 'wP', a7: 'bP' });
+    const next = applyAction(state, chooseGreedyAction(state));
+    expect(next.board[parseSquare('b6')]).toBeNull();
+    expect(next.board[parseSquare('g4')]?.type).toBe('pawn');
   });
 
   it('only ever plays legal actions, including the no-undo rotation rule', () => {
