@@ -1,4 +1,6 @@
 import './style.css';
+import { createSoundPlayer } from './audio/player.js';
+import { soundFor } from './audio/soundFor.js';
 import { bandSquares } from './game/board.js';
 import { notate } from './game/notation.js';
 import { capturedPieces, materialBalance, sortByValue } from './game/material.js';
@@ -28,6 +30,18 @@ const { scene, camera, renderer, onFrame } = createScene($('app'), {
 });
 scene.add(boardView.group, highlights.group, piecesView.group, capturedView.group);
 onFrame((time) => piecesView.update(time));
+
+const sound = createSoundPlayer();
+const soundToggle = $('sound-toggle');
+function showSoundToggle() {
+  soundToggle.textContent = sound.muted ? 'Sound: off' : 'Sound: on';
+  soundToggle.setAttribute('aria-pressed', String(!sound.muted));
+}
+soundToggle.addEventListener('click', () => {
+  sound.setMuted(!sound.muted);
+  showSoundToggle();
+});
+showSoundToggle();
 
 let state = newGame();
 let moves = [];
@@ -148,6 +162,7 @@ async function play() {
       const by = opponent(piece.color);
       captured = { ...captured, [by]: sortByValue([...captured[by], piece]) };
     }
+    sound.play(soundFor(state, action, next));
     state = next;
     notation.show(moves, state.result);
     piecesView.sync(state.board, { animate: true });

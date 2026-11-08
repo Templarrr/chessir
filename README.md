@@ -65,6 +65,23 @@ The **Moves** button on the right shows or hides the game record; **Copy** puts 
 clipboard as text, e.g. `1. e4 e5 2. Nf3 Nc6 3. A+ C- 4. Bxf7+`. The panel starts open on wide
 screens and closed on phones, and remembers your choice.
 
+## Sounds
+
+Every turn makes a sound, synthesized in the browser when it plays (no audio files are
+downloaded), with a little random variation so repeated moves do not sound identical:
+
+- **Move:** a wooden piece set down on the board ([listen](docs/sounds/move.wav)).
+- **Capture:** a harder knock, then the taken piece tumbling ([listen](docs/sounds/capture.wav)).
+- **Check:** the move or capture plus a light metal ring ([listen](docs/sounds/check.wav)).
+- **Checkmate:** a deeper, longer metal ring with a second strike
+  ([listen](docs/sounds/checkmate.wav)).
+- **Band rotation:** a scatter of clacks with a room echo, as every piece on the band lands at
+  once; a fuller band sounds busier ([listen](docs/sounds/rotation.wav)).
+
+The **Sound** button next to **New game** turns sound off and on, and is remembered. Browsers
+allow sound only after you have tapped or pressed a key on the page, so a bot-vs-bot game stays
+silent until then.
+
 | Phone                                                 | Phone, moves panel open                                      |
 | ----------------------------------------------------- | ------------------------------------------------------------ |
 | ![Phone layout](docs/screenshots/mobile-portrait.png) | ![Moves panel on a phone](docs/screenshots/mobile-moves.png) |
@@ -180,6 +197,7 @@ attackers around too much for it to mean anything, so it was dropped.
 - [x] Deep bot (alpha-beta search in a Web Worker)
 - [x] Move record panel with copy to clipboard
 - [x] Captured pieces beside the board, sorted by value, with the material difference
+- [x] Synthesized sounds for moves, captures, check, mate and rotations, with a mute button
 
 ## Development
 
@@ -207,6 +225,10 @@ Code style is enforced by [ESLint](https://eslint.org/) (correctness) and
   captured pieces and the material difference.
 - `src/render/` turns that state into a three.js scene; `capturedView.js` draws the captured
   pieces' ledges.
+- `src/audio/` makes the sounds with the Web Audio API: `synth.js` builds each sound from
+  oscillators and noise, `soundFor.js` picks the sound for a turn, `player.js` plays it and
+  remembers the mute choice. `docs/sounds/` holds recordings of each sound for reference only;
+  the game does not load them.
 - `src/ui/` holds page widgets outside the board, such as the moves panel.
 - `src/players/` holds the players: `human.js` turns taps and button presses into actions,
   `greedy.js` is the greedy bot, `deep.js` runs the Deep bot in a Web Worker, and `index.js`
