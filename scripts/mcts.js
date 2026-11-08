@@ -4,7 +4,7 @@ const EXPLORATION = 0.9;
 
 /**
  * Monte Carlo tree search with UCT, where each new leaf is scored by a quiescence search
- * instead of a random playout (random games of Chessir say almost nothing about a position).
+ * instead of a random playout (random games of Rookabout say almost nothing about a position).
  * Kept for the comparison matches; alpha-beta beat it clearly.
  */
 export function createMcts({ now = () => performance.now() } = {}) {
