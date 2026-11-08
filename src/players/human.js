@@ -2,10 +2,12 @@ import { moveAction, rotateAction } from '../game/actions.js';
 import { bandOf } from '../game/board.js';
 import { BAND_LETTERS, bandMoveName } from '../game/notation.js';
 import { PROMOTIONS, legalMovesFrom, rotationBlockReason } from '../game/rules.js';
+import { NORMAL } from '../game/state.js';
 
 const BAND_NAMES = ['outer ring', 'second ring', 'third ring', 'centre'];
 const PROMOTION_SYMBOLS = { queen: '♛', rook: '♜', bishop: '♝', knight: '♞' };
 const HINT = 'Tap a piece to move it, or any square to turn its ring';
+const NORMAL_HINT = 'Tap a piece to move it';
 
 /**
  * A player driven by taps on the board and the HUD buttons. One instance serves both
@@ -19,7 +21,8 @@ export function createHumanPlayer(ui, onSelection) {
   let selected = null;
   let moves = [];
 
-  const band = () => (selected === null ? null : bandOf(selected));
+  const turnsBands = () => state?.mode !== NORMAL;
+  const band = () => (selected === null || !turnsBands() ? null : bandOf(selected));
 
   function refresh() {
     const targets = [];
@@ -33,7 +36,9 @@ export function createHumanPlayer(ui, onSelection) {
     const active = resolve !== null && band() !== null;
     ui.bandName.textContent = active
       ? `Turn band ${BAND_LETTERS[band()]} · ${BAND_NAMES[band()]}`
-      : HINT;
+      : turnsBands()
+        ? HINT
+        : NORMAL_HINT;
     let note = '';
     for (const [button, direction] of [
       [ui.rotateCounterClockwise, -1],
@@ -86,7 +91,9 @@ export function createHumanPlayer(ui, onSelection) {
     const options = moves.filter((m) => m.to === square);
     if (options.length > 1) return choosePromotion(options[0].from, square);
     if (options.length === 1) return submit(options[0]);
-    select(square === selected ? null : square);
+    // Without rotations a square is only worth selecting for a piece of the side to move.
+    const selectable = turnsBands() || state.board[square]?.color === state.turn;
+    select(square === selected || !selectable ? null : square);
   }
 
   function rotate(direction) {

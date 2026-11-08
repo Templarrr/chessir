@@ -81,7 +81,11 @@ body {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.6em;
+  width: max-content;
+  max-width: calc(100vw - 24px);
   font-size: clamp(13px, 1.9vmin, 16px);
   white-space: nowrap;
 }
@@ -95,7 +99,8 @@ body {
   background: rgb(28 18 11 / 0.6);
 }
 
-.players label::before {
+.players label.white::before,
+.players label.black::before {
   content: '';
   width: 0.7em;
   height: 0.7em;

@@ -23,6 +23,15 @@ every piece back exactly where it stood before their move. In practice that mean
 straight back right after your opponent rotated it. Any rotation that leads somewhere new is
 fine. Without this rule a game could stall forever with the same two positions taking turns.
 
+### Game modes
+
+The **Mode** selector at the top picks the rules. **Roundabout** (the default) is the game
+described here, with band rotations. **Normal** is plain chess: no band can be turned, the bots
+only move pieces, and the rotation controls and the golden ring borders on the board are hidden.
+Changing the mode starts a new game, and the choice is remembered.
+
+![Normal mode: plain chess, without ring borders or rotation controls](docs/screenshots/normal-mode.png)
+
 Details that follow from the twist:
 
 - Castling is allowed only if neither the king nor that rook has ever left its square, whether
@@ -49,7 +58,7 @@ As a human:
 
 - Tap one of your pieces to see where it can go (dots, or rings for captures), then tap the
   destination. Promotions ask which piece you want.
-- Tap any square to select its band; use ↺ / ↻ at the bottom to turn that band one square
+- In roundabout mode, tap any square to select its band; use ↺ / ↻ at the bottom to turn that band one square
   counter-clockwise or clockwise (as seen from White's side). If the turn is not allowed, the
   reason appears under the buttons.
 - Drag to orbit the camera, scroll or pinch to zoom.
@@ -202,6 +211,7 @@ attackers around too much for it to mean anything, so it was dropped.
 - [x] Piece moves and band rotation in the UI (hot-seat)
 - [x] Rules enforcement (check, mate, special moves, draws)
 - [x] Player picker: human or bot for each side
+- [x] Game modes: roundabout (with rotations) and normal chess
 - [x] Greedy bot
 - [x] Deep bot (alpha-beta search in a Web Worker)
 - [x] Move record panel with copy to clipboard

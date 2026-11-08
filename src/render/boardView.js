@@ -125,11 +125,20 @@ function buildBands() {
 export function createBoardView() {
   const group = new THREE.Group();
   const bands = buildBands();
-  group.add(buildFrame(), buildLabels(), buildBandInlays(), ...bands);
+  const inlays = buildBandInlays();
+  group.add(buildFrame(), buildLabels(), inlays, ...bands);
   const edge = FRAME_EDGE;
   const bounds = new THREE.Box3(
     new THREE.Vector3(-edge, FRAME_TOP - 0.45, -edge),
     new THREE.Vector3(edge, 1.3, edge),
   );
-  return { group, bands, bounds };
+  return {
+    group,
+    bands,
+    bounds,
+    /** Shows the ring borders only when the rings can turn. */
+    showBandInlays(visible) {
+      inlays.visible = visible;
+    },
+  };
 }
