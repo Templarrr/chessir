@@ -275,6 +275,7 @@ button.secondary:hover {
   max-height: 45vh;
   max-height: 45dvh;
   overflow-y: auto;
+  position: relative;
   font-variant-numeric: tabular-nums;
 }
 
@@ -294,11 +295,6 @@ button.secondary:hover {
   text-align: right;
 }
 
-#notation-list .last {
-  color: #f1d59c;
-  font-weight: bold;
-}
-
 #notation-list li.result,
 #notation-list li.empty {
   display: block;
@@ -306,8 +302,46 @@ button.secondary:hover {
   opacity: 0.8;
 }
 
-#notation-copy {
-  align-self: stretch;
+#notation-list .ply {
+  padding: 0 0.25em;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: none;
+  border-radius: 0.3em;
+}
+
+#notation-list .ply:hover {
+  background: rgb(241 220 180 / 0.15);
+}
+
+#notation-list .current {
+  color: #f1d59c;
+  font-weight: bold;
+  background: rgb(241 220 180 / 0.12);
+}
+
+#notation-list .ahead {
+  opacity: 0.45;
+}
+
+.history-steps,
+.history-actions {
+  display: flex;
+  gap: 0.3em;
+}
+
+.history-steps button,
+.history-actions button {
+  flex: 1;
+  padding: 0.3em 0;
+}
+
+.notation.browsing #history-reset:not(:disabled) {
+  color: #2b1a0d;
+  background: #e2bd7f;
+  border-color: #f1d59c;
 }
 
 [hidden] {
