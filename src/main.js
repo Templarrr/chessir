@@ -5,6 +5,7 @@ import { bandSquares } from './game/board.js';
 import { movesOf, recordAction, startHistory, truncateHistory } from './game/history.js';
 import { materialBalance } from './game/material.js';
 import { checkers, findKing, newGame } from './game/rules.js';
+import { GAME_MODES, ROUNDABOUT } from './game/state.js';
 import { createBoardView } from './render/boardView.js';
 import { createCapturedView } from './render/capturedView.js';
 import { createHighlights } from './render/highlights.js';
@@ -157,6 +158,27 @@ for (const color of ['white', 'black']) {
   });
 }
 
+const modeSelect = $('game-mode');
+function savedMode() {
+  try {
+    const mode = localStorage.getItem('chessir.mode');
+    if (GAME_MODES.includes(mode)) return mode;
+  } catch {
+    // Storage can be unavailable (private mode); fall back to the default.
+  }
+  return ROUNDABOUT;
+}
+modeSelect.value = savedMode();
+modeSelect.addEventListener('change', () => {
+  try {
+    localStorage.setItem('chessir.mode', modeSelect.value);
+  } catch {
+    // Not remembering the choice is fine.
+  }
+  // The rules differ from the first move on, so a new mode means a new game.
+  startGame();
+});
+
 onSquareTap(
   {
     canvas: renderer.domElement,
@@ -227,8 +249,9 @@ function resetHere() {
 
 function startGame() {
   pause();
-  history = startHistory(newGame());
+  history = startHistory(newGame({ mode: modeSelect.value }));
   viewing = 0;
+  boardView.showBandInlays(live().mode === ROUNDABOUT);
   showPosition();
   play();
 }

@@ -221,3 +221,24 @@ describe('draws', () => {
     expect(state.result).toMatchObject({ outcome: 'draw', reason: 'threefold repetition' });
   });
 });
+
+describe('game modes', () => {
+  it('starts in roundabout mode, where bands turn', () => {
+    const state = newGame();
+    expect(state.mode).toBe('roundabout');
+    expect(legalRotations(state).length).toBeGreaterThan(0);
+  });
+
+  it('allows no rotations in normal mode', () => {
+    const state = newGame({ mode: 'normal' });
+    expect(legalActions(state)).toHaveLength(20);
+    expect(rotationBlockReason(state, 0, 1)).toBe('Bands do not turn in normal mode');
+    expect(() => applyAction(state, rotateAction(0, 1))).toThrow();
+  });
+
+  it('keeps the mode for the whole game', () => {
+    const state = applyAction(newGame({ mode: 'normal' }), moveAction(sq('e2'), sq('e4')));
+    expect(state.mode).toBe('normal');
+    expect(legalRotations(state)).toEqual([]);
+  });
+});

@@ -1,5 +1,6 @@
 import { BAND_COUNT, bandOf, bandSquares } from '../game/board.js';
 import { WHITE as WHITE_NAME } from '../game/pieces.js';
+import { NORMAL as NORMAL_MODE } from '../game/state.js';
 
 // A compact mutable position with make/unmake, so the search does not allocate per node.
 // It mirrors src/game/rules.js exactly; tests/engine.test.js checks that on random games.
@@ -175,6 +176,8 @@ export class Position {
     this.hashHi = 0;
     // Rotations blocked by the no-undo rule in the current position, as restoringRotations.
     this.blocked = 0;
+    // False in normal mode, where neither side may turn a band.
+    this.rotations = true;
     this.ply = 0;
     this.prevBoard = new Int8Array(64);
     this.scratch = new Int8Array(64);
@@ -207,6 +210,7 @@ export class Position {
       const r = state.board[rook];
       if (k && r && !state.moved.includes(k.id) && !state.moved.includes(r.id)) pos.castling |= bit;
     }
+    pos.rotations = state.mode !== NORMAL_MODE;
     pos.ep = state.enPassant ?? -1;
     pos.halfmove = state.halfmoveClock;
     for (let sq = 0; sq < 64; sq++) {
@@ -404,6 +408,7 @@ export class Position {
       }
     }
 
+    if (!this.rotations) return n;
     // In check, the bands holding the king or a checker are locked.
     const checkerBands = this.attackerBands(king, them);
     const locked = checkerBands ? checkerBands | (1 << BAND_OF[king]) : 0;

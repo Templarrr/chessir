@@ -18,10 +18,10 @@ function seeded(seed) {
   };
 }
 
-function randomGames(count, plies, seed, check) {
+function randomGames(count, plies, seed, check, options) {
   const random = seeded(seed);
   for (let g = 0; g < count; g++) {
-    let state = newGame();
+    let state = newGame(options);
     for (let ply = 0; ply < plies && !state.result; ply++) {
       check(state);
       const actions = legalActions(state);
@@ -39,6 +39,22 @@ describe('engine position', () => {
       const theirs = legalActions(state).map(describeAction).sort();
       expect(mine).toEqual(theirs);
     });
+  }, 60000);
+
+  it('generates no rotations in normal mode, matching the rules', () => {
+    randomGames(
+      10,
+      80,
+      5,
+      (state) => {
+        const mine = Position.fromState(state).legalMoves().map(moveToAction);
+        expect(mine.some((a) => a.type === 'rotate')).toBe(false);
+        expect(mine.map(describeAction).sort()).toEqual(
+          legalActions(state).map(describeAction).sort(),
+        );
+      },
+      { mode: 'normal' },
+    );
   }, 60000);
 
   it('keeps the incremental hash and the board in step through make and unmake', () => {
@@ -93,6 +109,15 @@ describe('engine search', () => {
     const state = position({ g1: 'wK', a7: 'wR', b2: 'wR', h8: 'bK' });
     const next = applyAction(state, best(state));
     expect(next.result?.outcome).toBe('checkmate');
+  });
+
+  it('plays a move, not a rotation, in normal mode', () => {
+    let state = newGame({ mode: 'normal' });
+    for (let ply = 0; ply < 6; ply++) {
+      const action = best(state, 100);
+      expect(action.type).toBe('move');
+      state = applyAction(state, action);
+    }
   });
 
   it('wins a hanging queen', () => {

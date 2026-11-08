@@ -1,7 +1,7 @@
 import { BAND_COUNT, BOARD_SIZE, bandSquares, squareCoords, squareIndex } from './board.js';
 import { moveAction, rotateAction } from './actions.js';
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK, WHITE, opponent } from './pieces.js';
-import { createInitialState, rotateBand } from './state.js';
+import { NORMAL, createInitialState, rotateBand } from './state.js';
 
 export const PROMOTIONS = [QUEEN, ROOK, BISHOP, KNIGHT];
 const FIFTY_MOVE_PLIES = 100;
@@ -228,6 +228,7 @@ function restoresPreviousBoard(state, band, direction) {
  */
 export function rotationBlockReason(state, band, direction) {
   if (state.result) return 'The game is over';
+  if (state.mode === NORMAL) return 'Bands do not turn in normal mode';
   const ring = bandSquares(band);
   if (!ring.some((sq) => state.board[sq])) return 'This band is empty';
   // Turning a band that carries only enemy pieces would move nothing but theirs.
@@ -326,8 +327,8 @@ function withPositionRecorded(state) {
   return { ...state, positions: { ...state.positions, [key]: (state.positions[key] ?? 0) + 1 } };
 }
 
-export function newGame() {
-  return Object.freeze(withPositionRecorded(createInitialState()));
+export function newGame(options) {
+  return Object.freeze(withPositionRecorded(createInitialState(options)));
 }
 
 /** Plays a legal action and returns the next state; throws on illegal input. */

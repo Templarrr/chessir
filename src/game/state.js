@@ -6,7 +6,12 @@ import { BACK_RANK, BLACK, PAWN, WHITE } from './pieces.js';
  * copying or undoing anything. Pieces carry stable ids so the renderer can follow
  * them when a band rotation moves many pieces at once.
  */
-export function createInitialState() {
+/** Roundabout is the game with band rotations; normal mode is plain chess. */
+export const ROUNDABOUT = 'roundabout';
+export const NORMAL = 'normal';
+export const GAME_MODES = [ROUNDABOUT, NORMAL];
+
+export function createInitialState({ mode = ROUNDABOUT } = {}) {
   const board = new Array(BOARD_SIZE * BOARD_SIZE).fill(null);
   let nextId = 0;
   const place = (file, rank, type, color) => {
@@ -22,6 +27,7 @@ export function createInitialState() {
 
   return Object.freeze({
     board: Object.freeze(board),
+    mode,
     turn: WHITE,
     // Square a pawn just skipped with its double step, capturable en passant this turn.
     enPassant: null,
