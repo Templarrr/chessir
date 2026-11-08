@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseSquare } from '../src/game/board.js';
 import { BLACK, WHITE } from '../src/game/pieces.js';
-import { applyAction, legalActions, newGame } from '../src/game/rules.js';
+import { applyAction, isDeadPosition, legalActions, newGame } from '../src/game/rules.js';
 import { createInitialState } from '../src/game/state.js';
 import { createSearcher } from '../src/engine/search.js';
 import { Position, historyKey, moveToAction } from '../src/engine/position.js';
@@ -103,6 +103,30 @@ function best(state, ms = 300) {
   const searcher = createSearcher({ ttBits: 16 });
   return moveToAction(searcher.think(Position.fromState(state), { softMs: ms, hardMs: ms }).move);
 }
+
+describe('engine insufficient material', () => {
+  it('agrees with the rules on which positions are dead', () => {
+    const cases = [
+      { e1: 'wK', e8: 'bK' },
+      { e1: 'wK', e8: 'bK', c1: 'wB' },
+      { e1: 'wK', e8: 'bK', g8: 'bN' },
+      { e1: 'wK', e8: 'bK', f1: 'wB', c8: 'bB' },
+      { e1: 'wK', e8: 'bK', f1: 'wB', c8: 'bB', d3: 'wB' },
+      { e1: 'wK', e8: 'bK', c1: 'wB', c8: 'bB' },
+      { e1: 'wK', e8: 'bK', c1: 'wB', g8: 'bN' },
+      { e1: 'wK', e8: 'bK', a1: 'wR' },
+      { e1: 'wK', e8: 'bK', a2: 'wP' },
+    ];
+    for (const mode of ['normal', 'roundabout']) {
+      for (const pieces of cases) {
+        const state = { ...position(pieces), mode };
+        expect(Position.fromState(state).isDead(), JSON.stringify({ mode, pieces })).toBe(
+          isDeadPosition(state.board, mode),
+        );
+      }
+    }
+  });
+});
 
 describe('engine search', () => {
   it('mates in one', () => {

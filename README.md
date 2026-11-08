@@ -45,7 +45,22 @@ Details that follow from the twist:
 - Because of the no-undo rule, which rotations it blocks are part of the position when counting
   threefold repetition.
 - The game ends in checkmate, or in a draw by stalemate, threefold repetition, the fifty-move
-  rule, or when only the two kings remain.
+  rule, or insufficient material (see below).
+
+### Draw by insufficient material
+
+The game is drawn as soon as neither side can ever checkmate, whatever is played.
+
+- **In both modes:** king against king, king and bishop against king, and king and knight
+  against king. No checkmate position exists with that material. Rotations do not change this:
+  a lone king in check cannot turn its own band (it is locked), so it can only step away, just
+  like in plain chess.
+- **Normal mode only:** kings with bishops that all stand on the same square colour, for
+  example king and bishop against king and bishop with both bishops on light squares.
+- **Why not in roundabout mode:** a rotation moves every piece on the band one square along,
+  which is always onto the other colour. So a bishop can change colour, and with bishops on
+  opposite colours a checkmate is possible (for example White Kf7, Bd4 against Black Kh8,
+  Bh7). The game goes on, and the fifty-move rule still ends it if nobody makes progress.
 
 ## How to play
 
