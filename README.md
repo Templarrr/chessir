@@ -1,8 +1,8 @@
-# Chessir
+# Rookabout
 
 Chess where the board itself can turn. Rendered in the browser with [three.js](https://threejs.org/).
 
-**Play it:** https://templarrr.github.io/chessir/
+**Play it:** https://templarrr.github.io/rookabout/
 
 ![A hot-seat game after a run of trades: each side's captures stand beside the board, White is a pawn up](docs/screenshots/desktop.png)
 
@@ -213,7 +213,7 @@ match pairs games from the same random opening with colours swapped.
 | Deep bot vs first version (20 games, 1 s per move)          | +11 =3 −6                |
 
 Monte Carlo tree search (scoring new positions by playing out captures, since random games of
-Chessir say little) lost every game to alpha-beta. Classic chess king safety (penalising enemy
+Rookabout say little) lost every game to alpha-beta. Classic chess king safety (penalising enemy
 pieces next to the king) made the bot weaker, probably because rotations carry kings and
 attackers around too much for it to mean anything, so it was dropped.
 
@@ -284,4 +284,4 @@ Every push to `main` is built and published by `.github/workflows/deploy.yml`. O
 1. Open the repository on GitHub, go to **Settings → Pages**.
 2. Under **Build and deployment → Source**, choose **GitHub Actions**.
 3. Merge to `main` (or run the workflow from the **Actions** tab). The site appears at
-   `https://<user>.github.io/chessir/`.
+   `https://<user>.github.io/rookabout/`.

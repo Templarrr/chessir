@@ -1,6 +1,6 @@
 import { playTurn } from './synth.js';
 
-const STORAGE_KEY = 'chessir.sound.muted';
+const STORAGE_KEY = 'rookabout.sound.muted';
 
 function savedMuted() {
   try {

@@ -17,13 +17,26 @@ import { createHumanPlayer } from './players/human.js';
 import { PLAYER_KINDS } from './players/index.js';
 import { createNotationPanel } from './ui/notationPanel.js';
 
+// The game used to be called Chessir; carry saved settings over to the new key names.
+try {
+  for (const key of Object.keys(localStorage)) {
+    if (!key.startsWith('chessir.')) continue;
+    const renamed = `rookabout.${key.slice('chessir.'.length)}`;
+    if (localStorage.getItem(renamed) === null)
+      localStorage.setItem(renamed, localStorage.getItem(key));
+    localStorage.removeItem(key);
+  }
+} catch {
+  // Storage can be unavailable (private mode).
+}
+
 const $ = (id) => document.getElementById(id);
 const status = $('status');
 
 const setSelect = $('piece-set');
 function savedSet() {
   try {
-    const id = localStorage.getItem('chessir.set');
+    const id = localStorage.getItem('rookabout.set');
     if (PIECE_SETS.some((s) => s.id === id)) return id;
   } catch {
     // Storage can be unavailable (private mode); fall back to the default.
@@ -142,7 +155,7 @@ const players = {};
 
 function savedKind(color) {
   try {
-    const id = localStorage.getItem(`chessir.player.${color}`);
+    const id = localStorage.getItem(`rookabout.player.${color}`);
     if (PLAYER_KINDS.some((k) => k.id === id)) return id;
   } catch {
     // Storage can be unavailable (private mode); fall back to the default.
@@ -155,7 +168,7 @@ function setPlayer(color, id) {
   if (players[color] !== human) players[color]?.cancel?.();
   players[color] = kind.create ? kind.create() : human;
   try {
-    localStorage.setItem(`chessir.player.${color}`, id);
+    localStorage.setItem(`rookabout.player.${color}`, id);
   } catch {
     // Not remembering the choice is fine.
   }
@@ -179,7 +192,7 @@ for (const color of ['white', 'black']) {
 const modeSelect = $('game-mode');
 function savedMode() {
   try {
-    const mode = localStorage.getItem('chessir.mode');
+    const mode = localStorage.getItem('rookabout.mode');
     if (GAME_MODES.includes(mode)) return mode;
   } catch {
     // Storage can be unavailable (private mode); fall back to the default.
@@ -189,7 +202,7 @@ function savedMode() {
 modeSelect.value = savedMode();
 modeSelect.addEventListener('change', () => {
   try {
-    localStorage.setItem('chessir.mode', modeSelect.value);
+    localStorage.setItem('rookabout.mode', modeSelect.value);
   } catch {
     // Not remembering the choice is fine.
   }
@@ -200,7 +213,7 @@ modeSelect.addEventListener('change', () => {
 // Only the look changes, so the game carries on where it is.
 setSelect.addEventListener('change', () => {
   try {
-    localStorage.setItem('chessir.set', setSelect.value);
+    localStorage.setItem('rookabout.set', setSelect.value);
   } catch {
     // Not remembering the choice is fine.
   }
@@ -304,4 +317,4 @@ $('new-game').addEventListener('click', startGame);
 startGame();
 
 // Lets the screenshot script drive the game without simulating pointer events.
-window.chessir = { tap: (square) => human.tap(square), getState: live, goTo };
+window.rookabout = { tap: (square) => human.tap(square), getState: live, goTo };

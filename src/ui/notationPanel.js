@@ -1,6 +1,6 @@
 import { formatMovetext, resultToken } from '../game/notation.js';
 
-const STORAGE_KEY = 'chessir.notation.open';
+const STORAGE_KEY = 'rookabout.notation.open';
 const WIDE_SCREEN = '(min-width: 700px)';
 
 function initiallyOpen() {

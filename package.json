@@ -1,5 +1,5 @@
 {
-  "name": "chessir",
+  "name": "rookabout",
   "private": true,
   "version": "0.1.0",
   "description": "Chess with rotating board bands, rendered with three.js",
