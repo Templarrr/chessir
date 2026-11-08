@@ -231,9 +231,9 @@ Code style is enforced by [ESLint](https://eslint.org/) (correctness) and
 - `src/game/` holds the rules and game state as plain data with no three.js or DOM
   dependencies, so it can be unit-tested and used by a computer player.
   `src/game/rules.js` holds move generation, the rotation rules and game-end detection.
-  `src/game/notation.js` writes moves and rotations as text; `src/game/history.js` keeps every position of the game for stepping back and resetting;
-  `src/game/material.js` works out
-  captured pieces and the material difference.
+  `src/game/notation.js` writes moves and rotations as text; `src/game/history.js` keeps
+  every position of the game for stepping back and resetting; `src/game/material.js` works
+  out captured pieces and the material difference.
 - `src/render/` turns that state into a three.js scene; `capturedView.js` draws the captured
   pieces' ledges.
 - `src/audio/` makes the sounds with the Web Audio API: `synth.js` builds each sound from
