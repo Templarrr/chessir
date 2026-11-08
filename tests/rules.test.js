@@ -9,6 +9,7 @@ import {
   legalMovesFrom,
   legalRotations,
   newGame,
+  isDeadPosition,
   rotationBlockReason,
 } from '../src/game/rules.js';
 import { createInitialState } from '../src/game/state.js';
@@ -219,6 +220,47 @@ describe('draws', () => {
     ];
     for (const [from, to] of [...shuffle, ...shuffle]) state = move(state, from, to);
     expect(state.result).toMatchObject({ outcome: 'draw', reason: 'threefold repetition' });
+  });
+});
+
+describe('insufficient material', () => {
+  const dead = (pieces, mode) => isDeadPosition(position(pieces).board, mode);
+
+  it('is a draw with a lone minor piece in both modes', () => {
+    for (const mode of ['normal', 'roundabout']) {
+      expect(dead({ e1: 'wK', e8: 'bK' }, mode)).toBe(true);
+      expect(dead({ e1: 'wK', e8: 'bK', c1: 'wB' }, mode)).toBe(true);
+      expect(dead({ e1: 'wK', e8: 'bK', g8: 'bN' }, mode)).toBe(true);
+      expect(dead({ e1: 'wK', e8: 'bK', a2: 'wP' }, mode)).toBe(false);
+      expect(dead({ e1: 'wK', e8: 'bK', a1: 'wR' }, mode)).toBe(false);
+      expect(dead({ e1: 'wK', e8: 'bK', c1: 'wB', g8: 'bN' }, mode)).toBe(false);
+    }
+  });
+
+  it('is a draw with same-coloured bishops only in normal mode', () => {
+    const light = { e1: 'wK', e8: 'bK', f1: 'wB', c8: 'bB' };
+    const opposite = { e1: 'wK', e8: 'bK', c1: 'wB', c8: 'bB' };
+    expect(dead(light, 'normal')).toBe(true);
+    expect(dead({ ...light, d3: 'wB' }, 'normal')).toBe(true);
+    expect(dead(opposite, 'normal')).toBe(false);
+    expect(dead(light, 'roundabout')).toBe(false);
+  });
+
+  it('allows mate with opposite-coloured bishops, which rotations can bring about', () => {
+    const state = move(position({ f7: 'wK', a1: 'wB', h8: 'bK', h7: 'bB' }), 'a1', 'd4');
+    expect(state.result).toMatchObject({ outcome: 'checkmate', winner: WHITE });
+  });
+
+  it('ends the game when a capture leaves too little to mate', () => {
+    const state = move(position({ e1: 'wK', d1: 'wN', h8: 'bK', e3: 'bR' }), 'd1', 'e3');
+    expect(state.result).toMatchObject({ outcome: 'draw', reason: 'insufficient material' });
+  });
+
+  it('ends a normal game at same-coloured bishops but keeps a roundabout one going', () => {
+    const pieces = { e1: 'wK', f1: 'wB', e2: 'bN', e8: 'bK', c8: 'bB' };
+    const normal = move(position(pieces, WHITE, { mode: 'normal' }), 'e1', 'e2');
+    expect(normal.result).toMatchObject({ outcome: 'draw', reason: 'insufficient material' });
+    expect(move(position(pieces), 'e1', 'e2').result).toBeNull();
   });
 });
 

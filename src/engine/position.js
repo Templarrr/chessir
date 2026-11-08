@@ -675,16 +675,12 @@ export class Position {
 
   /**
    * Whether the game rules call the current position a draw before looking at legal moves:
-   * only kings left, the fifty-move rule, or a repetition. Inside the search one repeat is
+   * insufficient material, the fifty-move rule, or a repetition. Inside the search one repeat is
    * enough (the side that could avoid it would have), before it the third occurrence counts.
    */
   isRuleDraw(searchStart) {
     if (this.halfmove >= 100) return true;
-    let pieces = 0;
-    for (let sq = 0; sq < 64 && pieces === 0; sq++) {
-      if (this.board[sq] && (this.board[sq] & 7) !== KING) pieces++;
-    }
-    if (pieces === 0) return true;
+    if (this.isDead()) return true;
     const lo = this.hashLo;
     const hi = this.hashHi;
     const limit = Math.max(searchStart, this.ply - this.halfmove);
@@ -693,6 +689,23 @@ export class Position {
       if (this.stackHashLo[i] === lo && this.stackHashHi[i] === hi) return true;
     }
     return (this.history.get(historyKey(lo, hi)) ?? 0) >= 2;
+  }
+
+  /** Mirrors isDeadPosition in src/game/rules.js. */
+  isDead() {
+    let others = 0;
+    let minors = 0;
+    let shades = 0;
+    for (let sq = 0; sq < 64; sq++) {
+      const type = this.board[sq] & 7;
+      if (!type || type === KING) continue;
+      others++;
+      if (type === KNIGHT || type === BISHOP) minors++;
+      if (type === BISHOP) shades |= 1 << ((fileOf(sq) + rankOf(sq)) & 1);
+      else if (!this.rotations) shades = 3;
+    }
+    if (others === 0 || (others === 1 && minors === 1)) return true;
+    return !this.rotations && shades !== 3;
   }
 
   isLegal(m) {

@@ -304,12 +304,35 @@ function positionKey(state) {
   return `${squares}|${state.turn}|${castling}|${state.enPassant}|${blocked.join(' ')}`;
 }
 
-function onlyKingsLeft(board) {
-  return board.every((p) => !p || p.type === KING);
+const squareShade = (square) => {
+  const { file, rank } = squareCoords(square);
+  return (file + rank) % 2;
+};
+
+/**
+ * Whether neither side can ever checkmate, whatever is played: a draw by insufficient
+ * material. K v K, K+B v K and K+N v K are dead in both modes, as no mating position exists
+ * with that material, and a lone king can only answer check with a king move (its band is
+ * locked while in check), so rotations add no new mates. In normal mode, kings with bishops
+ * that all stand on one square colour are dead too. In roundabout mode they are not: a
+ * rotation moves every piece on the band to a neighbouring square of the other colour, so
+ * bishops can end up on opposite colours, where mates exist.
+ */
+export function isDeadPosition(board, mode) {
+  const others = [];
+  board.forEach((p, square) => {
+    if (p && p.type !== KING) others.push({ type: p.type, square });
+  });
+  if (others.length === 0) return true;
+  if (others.length === 1 && [BISHOP, KNIGHT].includes(others[0].type)) return true;
+  if (mode !== NORMAL || others.some((o) => o.type !== BISHOP)) return false;
+  return others.every((o) => squareShade(o.square) === squareShade(others[0].square));
 }
 
 function decideResult(state) {
-  if (onlyKingsLeft(state.board)) return { outcome: 'draw', reason: 'insufficient material' };
+  if (isDeadPosition(state.board, state.mode)) {
+    return { outcome: 'draw', reason: 'insufficient material' };
+  }
   if (state.positions[positionKey(state)] >= REPETITIONS_FOR_DRAW) {
     return { outcome: 'draw', reason: 'threefold repetition' };
   }
