@@ -196,6 +196,11 @@ button.secondary:hover {
   background: rgb(74 50 32 / 0.9);
 }
 
+.game-controls {
+  display: flex;
+  gap: 0.5em;
+}
+
 .promotion {
   display: flex;
   gap: 0.5em;
