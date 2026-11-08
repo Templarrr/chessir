@@ -63,6 +63,18 @@ As a human:
   reason appears under the buttons.
 - Drag to orbit the camera, scroll or pinch to zoom.
 
+### Piece sets
+
+The **Set** selector at the top picks how the pieces look. **Wooden 3d** (the default) is the
+turned wooden set. **High visibility 2d** swaps every piece for a flat cut-out of the classic
+printed-diagram figure: white pieces in white with a black outline, black pieces in black with a
+white outline, so pawn and bishop or king and queen are told apart at a glance. The cut-outs
+always turn square to the camera and lean back as far as it looks down, so they read like a
+diagram from any angle; seen from straight above they lie flat on their squares. Switching sets
+keeps the game going, and the choice is remembered. The figures were drawn for this project.
+
+![The same game with the high visibility set](docs/screenshots/high-visibility.png)
+
 Captured pieces stand on a ledge beside the board on the side of the player who took them,
 most valuable first (queen, rooks, bishops, knights, pawns), so the material difference is easy
 to see. The side that is ahead also gets a `+N` on its ledge, counted with the piece values
@@ -100,9 +112,9 @@ The **Sound** button next to **New game** turns sound off and on, and is remembe
 allow sound only after you have tapped or pressed a key on the page, so a bot-vs-bot game stays
 silent until then.
 
-| Phone                                                 | Phone, moves panel open                                      |
-| ----------------------------------------------------- | ------------------------------------------------------------ |
-| ![Phone layout](docs/screenshots/mobile-portrait.png) | ![Moves panel on a phone](docs/screenshots/mobile-moves.png) |
+| Phone                                                 | Phone, moves panel open                                      | Phone, high visibility set                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| ![Phone layout](docs/screenshots/mobile-portrait.png) | ![Moves panel on a phone](docs/screenshots/mobile-moves.png) | ![High visibility set on a phone](docs/screenshots/high-visibility-mobile.png) |
 
 ![In check: the king's ring is locked](docs/screenshots/in-check.png)
 
@@ -245,7 +257,9 @@ Code style is enforced by [ESLint](https://eslint.org/) (correctness) and
   every position of the game for stepping back and resetting; `src/game/material.js` works
   out captured pieces and the material difference.
 - `src/render/` turns that state into a three.js scene; `capturedView.js` draws the captured
-  pieces' ledges.
+  pieces' ledges. `pieceSets.js` lists the piece sets: `pieceModels.js` builds the wooden
+  pieces, `flatPieceArt.js` holds the 2d figures as drawings and `flatPieceModels.js` turns them
+  into cut-outs, tracing each outline with `contour.js`.
 - `src/audio/` makes the sounds with the Web Audio API: `synth.js` builds each sound from
   oscillators and noise, `soundFor.js` picks the sound for a turn, `player.js` plays it and
   remembers the mute choice. `docs/sounds/` holds recordings of each sound for reference only;

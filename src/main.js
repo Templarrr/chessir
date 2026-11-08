@@ -10,6 +10,7 @@ import { createBoardView } from './render/boardView.js';
 import { createCapturedView } from './render/capturedView.js';
 import { createHighlights } from './render/highlights.js';
 import { onSquareTap } from './render/picking.js';
+import { DEFAULT_PIECE_SET, PIECE_SETS, pieceSet } from './render/pieceSets.js';
 import { ANIMATION_MS, createPiecesView } from './render/piecesView.js';
 import { createScene } from './render/scene.js';
 import { createHumanPlayer } from './players/human.js';
@@ -19,17 +20,34 @@ import { createNotationPanel } from './ui/notationPanel.js';
 const $ = (id) => document.getElementById(id);
 const status = $('status');
 
+const setSelect = $('piece-set');
+function savedSet() {
+  try {
+    const id = localStorage.getItem('chessir.set');
+    if (PIECE_SETS.some((s) => s.id === id)) return id;
+  } catch {
+    // Storage can be unavailable (private mode); fall back to the default.
+  }
+  return DEFAULT_PIECE_SET;
+}
+setSelect.replaceChildren(...PIECE_SETS.map((s) => new Option(s.label, s.id)));
+setSelect.value = savedSet();
+
 const boardView = createBoardView();
-const piecesView = createPiecesView();
+const piecesView = createPiecesView(pieceSet(setSelect.value));
 const highlights = createHighlights();
-const capturedView = createCapturedView();
+const capturedView = createCapturedView(pieceSet(setSelect.value));
 // Wide screens have room beside the board for the captured pieces, tall ones above and below.
 const { scene, camera, renderer, onFrame } = createScene($('app'), {
   boundsFor: (aspect) =>
     boardView.bounds.clone().union(capturedView.setLayout(aspect > 1.15 ? 'sides' : 'ends')),
 });
 scene.add(boardView.group, highlights.group, piecesView.group, capturedView.group);
-onFrame((time) => piecesView.update(time));
+onFrame((time) => {
+  piecesView.update(time);
+  piecesView.faceCamera(camera);
+  capturedView.faceCamera(camera);
+});
 
 const sound = createSoundPlayer();
 const soundToggle = $('sound-toggle');
@@ -177,6 +195,18 @@ modeSelect.addEventListener('change', () => {
   }
   // The rules differ from the first move on, so a new mode means a new game.
   startGame();
+});
+
+// Only the look changes, so the game carries on where it is.
+setSelect.addEventListener('change', () => {
+  try {
+    localStorage.setItem('chessir.set', setSelect.value);
+  } catch {
+    // Not remembering the choice is fine.
+  }
+  const set = pieceSet(setSelect.value);
+  piecesView.setSet(set, shown().board);
+  capturedView.setSet(set);
 });
 
 onSquareTap(
