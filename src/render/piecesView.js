@@ -5,7 +5,7 @@ import { PALETTE } from './palette.js';
 import { createPieceMesh } from './pieceModels.js';
 import { woodMaterial } from './wood.js';
 
-const ANIMATION_MS = 320;
+export const ANIMATION_MS = 320;
 const KNIGHT_HOP = 0.45;
 
 const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);

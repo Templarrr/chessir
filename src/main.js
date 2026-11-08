@@ -9,7 +9,7 @@ import { createBoardView } from './render/boardView.js';
 import { createCapturedView } from './render/capturedView.js';
 import { createHighlights } from './render/highlights.js';
 import { onSquareTap } from './render/picking.js';
-import { createPiecesView } from './render/piecesView.js';
+import { ANIMATION_MS, createPiecesView } from './render/piecesView.js';
 import { createScene } from './render/scene.js';
 import { createHumanPlayer } from './players/human.js';
 import { PLAYER_KINDS } from './players/index.js';
@@ -168,7 +168,15 @@ onSquareTap(
   (square) => human.tap(square),
 );
 
+// After an animated change the next move waits until the glide and clack are over, so a fast
+// bot never sets a second piece moving while the first is still on its way.
+const SETTLE_MS = ANIMATION_MS + 250;
+let settledAt = 0;
+const settled = () =>
+  new Promise((resolve) => setTimeout(resolve, Math.max(0, settledAt - performance.now())));
+
 function showPosition({ animate = false } = {}) {
+  settledAt = animate ? performance.now() + SETTLE_MS : 0;
   notation.show(movesOf(history), live().result, viewing);
   piecesView.sync(shown().board, { animate });
   showCaptured();
@@ -183,6 +191,8 @@ async function play() {
     const player = players[state.turn];
     if (player !== human) $('band-name').textContent = `${player.name} is thinking…`;
     const action = await player.chooseAction(state);
+    if (current !== game) return;
+    await settled();
     if (current !== game) return;
     history = recordAction(history, action);
     viewing = history.length - 1;
