@@ -1,27 +1,22 @@
 import * as THREE from 'three';
-import { KNIGHT, WHITE } from '../game/pieces.js';
+import { KNIGHT } from '../game/pieces.js';
 import { squareToWorld } from './boardView.js';
-import { PALETTE } from './palette.js';
-import { createPieceMesh } from './pieceModels.js';
-import { woodMaterial } from './wood.js';
+import { faceCamera } from './flatPieceModels.js';
 
 export const ANIMATION_MS = 320;
 const KNIGHT_HOP = 0.45;
 
 const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
-export function createPiecesView() {
+export function createPiecesView(initialSet) {
   const group = new THREE.Group();
-  const materials = {
-    white: woodMaterial(PALETTE.whitePiece, { seed: 11, roughness: 0.38, repeat: 0.6 }),
-    black: woodMaterial(PALETTE.blackPiece, { seed: 13, roughness: 0.3, repeat: 0.6 }),
-  };
+  let set = initialSet;
   const meshes = new Map();
   let animations = [];
   let leaving = [];
 
   function createMesh(piece) {
-    const mesh = createPieceMesh(piece, piece.color === WHITE ? materials.white : materials.black);
+    const mesh = set.createPieceMesh(piece);
     mesh.userData.type = piece.type;
     meshes.set(piece.id, mesh);
     group.add(mesh);
@@ -91,6 +86,17 @@ export function createPiecesView() {
     }
   }
 
+  /** Swaps every piece's model for the same piece from `next`, where it stands now. */
+  function setSet(next, board) {
+    set = next;
+    animations = [];
+    for (const mesh of leaving) group.remove(mesh);
+    leaving = [];
+    for (const mesh of meshes.values()) group.remove(mesh);
+    meshes.clear();
+    sync(board);
+  }
+
   /** The piece id under a ray hit on any part of a piece model, or null. */
   function pieceIdOf(object) {
     for (let o = object; o; o = o.parent) {
@@ -99,5 +105,12 @@ export function createPiecesView() {
     return null;
   }
 
-  return { group, sync, update, pieceIdOf };
+  return {
+    group,
+    sync,
+    update,
+    setSet,
+    faceCamera: (camera) => faceCamera(group, camera),
+    pieceIdOf,
+  };
 }

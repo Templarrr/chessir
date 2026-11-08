@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK, WHITE } from '../game/pieces.js';
+import { PALETTE } from './palette.js';
+import { woodMaterial } from './wood.js';
 
 const SEGMENTS = 48;
 const KNIGHT_TURN = Math.PI / 4;
@@ -184,7 +186,7 @@ function pieceGeometries(type) {
   return geometryCache.get(type);
 }
 
-export function createPieceMesh(piece, material) {
+function createPieceMesh(piece, material) {
   const group = new THREE.Group();
   for (const geometry of pieceGeometries(piece.type)) {
     const mesh = new THREE.Mesh(geometry, material);
@@ -199,4 +201,15 @@ export function createPieceMesh(piece, material) {
   }
   group.userData.pieceId = piece.id;
   return group;
+}
+
+export function createWoodenSet() {
+  const materials = {
+    white: woodMaterial(PALETTE.whitePiece, { seed: 11, roughness: 0.38, repeat: 0.6 }),
+    black: woodMaterial(PALETTE.blackPiece, { seed: 13, roughness: 0.3, repeat: 0.6 }),
+  };
+  return {
+    createPieceMesh: (piece) =>
+      createPieceMesh(piece, piece.color === WHITE ? materials.white : materials.black),
+  };
 }

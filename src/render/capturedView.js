@@ -1,8 +1,7 @@
 import * as THREE from 'three';
-import { WHITE } from '../game/pieces.js';
 import { FRAME_EDGE, FRAME_TOP } from './boardView.js';
+import { faceCamera } from './flatPieceModels.js';
 import { PALETTE } from './palette.js';
-import { createPieceMesh } from './pieceModels.js';
 import { woodMaterial } from './wood.js';
 
 const GAP = 0.06;
@@ -55,12 +54,9 @@ function balanceSprite() {
   return sprite;
 }
 
-export function createCapturedView() {
+export function createCapturedView(initialSet) {
   const group = new THREE.Group();
-  const materials = {
-    white: woodMaterial(PALETTE.whitePiece, { seed: 11, roughness: 0.38, repeat: 0.6 }),
-    black: woodMaterial(PALETTE.blackPiece, { seed: 13, roughness: 0.3, repeat: 0.6 }),
-  };
+  let set = initialSet;
   const trayMaterial = woodMaterial(PALETTE.frame, { seed: 17, repeat: 2, roughness: 0.6 });
   const sides = {};
   for (const color of ['white', 'black']) {
@@ -89,10 +85,7 @@ export function createCapturedView() {
 
     pieces.clear();
     captured.forEach((piece, slot) => {
-      const mesh = createPieceMesh(
-        piece,
-        piece.color === WHITE ? materials.white : materials.black,
-      );
+      const mesh = set.createPieceMesh(piece);
       const [x, z] = at(slot);
       mesh.position.set(x, FRAME_TOP, z);
       mesh.scale.setScalar(PIECE_SCALE);
@@ -136,5 +129,16 @@ export function createCapturedView() {
     );
   }
 
-  return { group, show, setLayout };
+  function setSet(next) {
+    set = next;
+    place('white');
+    place('black');
+  }
+
+  function faceCameraAll(camera) {
+    faceCamera(sides.white.pieces, camera);
+    faceCamera(sides.black.pieces, camera);
+  }
+
+  return { group, show, setLayout, setSet, faceCamera: faceCameraAll };
 }
