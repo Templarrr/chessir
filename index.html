@@ -28,7 +28,55 @@
       </button>
       <div id="notation-body" class="notation-body">
         <ol id="notation-list"></ol>
-        <button id="notation-copy" type="button" class="secondary">Copy</button>
+        <div class="history-steps">
+          <button
+            id="history-first"
+            type="button"
+            class="secondary"
+            title="To the start (Home)"
+            aria-label="To the start"
+          >
+            ⏮
+          </button>
+          <button
+            id="history-back"
+            type="button"
+            class="secondary"
+            title="Back a move (←)"
+            aria-label="Back a move"
+          >
+            ◀
+          </button>
+          <button
+            id="history-forward"
+            type="button"
+            class="secondary"
+            title="Forward a move (→)"
+            aria-label="Forward a move"
+          >
+            ▶
+          </button>
+          <button
+            id="history-last"
+            type="button"
+            class="secondary"
+            title="To the latest move (End)"
+            aria-label="To the latest move"
+          >
+            ⏭
+          </button>
+        </div>
+        <div class="history-actions">
+          <button
+            id="history-reset"
+            type="button"
+            class="secondary"
+            title="Drop the moves after this position and play on from here"
+          >
+            Reset here
+          </button>
+          <button id="notation-copy" type="button" class="secondary">Copy</button>
+        </div>
       </div>
     </aside>
     <div class="controls">

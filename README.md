@@ -65,6 +65,15 @@ The **Moves** button on the right shows or hides the game record; **Copy** puts 
 clipboard as text, e.g. `1. e4 e5 2. Nf3 Nc6 3. A+ C- 4. Bxf7+`. The panel starts open on wide
 screens and closed on phones, and remembers your choice.
 
+The moves panel also lets you walk through the game. **⏮ ◀ ▶ ⏭** step to the start, back a
+move, forward a move and to the latest move (the arrow keys, Home and End do the same), and
+clicking any move in the list shows the board right after it. While you look at an earlier
+position the board is view-only and bots wait; going back to the latest move carries on the
+game. **Reset here** drops every move after the position on the board, with its captures and
+notation, and play continues from there.
+
+![Looking back at move 12: later moves are dimmed and Reset here would continue from this position](docs/screenshots/history.png)
+
 ## Sounds
 
 Every turn makes a sound, synthesized in the browser when it plays (no audio files are
@@ -196,6 +205,7 @@ attackers around too much for it to mean anything, so it was dropped.
 - [x] Greedy bot
 - [x] Deep bot (alpha-beta search in a Web Worker)
 - [x] Move record panel with copy to clipboard
+- [x] Step through the game record and replay from any earlier position
 - [x] Captured pieces beside the board, sorted by value, with the material difference
 - [x] Synthesized sounds for moves, captures, check, mate and rotations, with a mute button
 
@@ -221,8 +231,9 @@ Code style is enforced by [ESLint](https://eslint.org/) (correctness) and
 - `src/game/` holds the rules and game state as plain data with no three.js or DOM
   dependencies, so it can be unit-tested and used by a computer player.
   `src/game/rules.js` holds move generation, the rotation rules and game-end detection.
-  `src/game/notation.js` writes moves and rotations as text; `src/game/material.js` works out
-  captured pieces and the material difference.
+  `src/game/notation.js` writes moves and rotations as text; `src/game/history.js` keeps
+  every position of the game for stepping back and resetting; `src/game/material.js` works
+  out captured pieces and the material difference.
 - `src/render/` turns that state into a three.js scene; `capturedView.js` draws the captured
   pieces' ledges.
 - `src/audio/` makes the sounds with the Web Audio API: `synth.js` builds each sound from

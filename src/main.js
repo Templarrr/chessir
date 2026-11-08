@@ -2,10 +2,9 @@ import './style.css';
 import { createSoundPlayer } from './audio/player.js';
 import { soundFor } from './audio/soundFor.js';
 import { bandSquares } from './game/board.js';
-import { notate } from './game/notation.js';
-import { capturedPieces, materialBalance, sortByValue } from './game/material.js';
-import { opponent } from './game/pieces.js';
-import { applyAction, checkers, findKing, newGame } from './game/rules.js';
+import { movesOf, recordAction, startHistory, truncateHistory } from './game/history.js';
+import { materialBalance } from './game/material.js';
+import { checkers, findKing, newGame } from './game/rules.js';
 import { createBoardView } from './render/boardView.js';
 import { createCapturedView } from './render/capturedView.js';
 import { createHighlights } from './render/highlights.js';
@@ -43,17 +42,29 @@ soundToggle.addEventListener('click', () => {
 });
 showSoundToggle();
 
-let state = newGame();
-let moves = [];
-let captured = { white: [], black: [] };
+let history = startHistory(newGame());
+// Index of the history entry on the board; below the last one the board is view-only.
+let viewing = 0;
 let game = 0;
 
-const notation = createNotationPanel({
-  panel: $('notation'),
-  toggle: $('notation-toggle'),
-  list: $('notation-list'),
-  copy: $('notation-copy'),
-});
+const live = () => history.at(-1).state;
+const shown = () => history[viewing].state;
+const browsing = () => viewing < history.length - 1;
+
+const notation = createNotationPanel(
+  {
+    panel: $('notation'),
+    toggle: $('notation-toggle'),
+    list: $('notation-list'),
+    copy: $('notation-copy'),
+    first: $('history-first'),
+    back: $('history-back'),
+    forward: $('history-forward'),
+    last: $('history-last'),
+    reset: $('history-reset'),
+  },
+  { goTo, resetHere },
+);
 
 const capitalize = (s) => s[0].toUpperCase() + s.slice(1);
 
@@ -63,6 +74,7 @@ function lastActionSquares(action) {
 }
 
 function showSelection(selection = {}) {
+  const state = shown();
   const inCheck = checkers(state).length > 0;
   highlights.show({
     lastMove: lastActionSquares(state.lastAction),
@@ -72,10 +84,12 @@ function showSelection(selection = {}) {
 }
 
 function showCaptured() {
+  const { captured, state } = history[viewing];
   capturedView.show(captured, materialBalance(state.board));
 }
 
 function showStatus() {
+  const state = shown();
   const { result } = state;
   if (!result) {
     const check = checkers(state).length > 0 ? ' · Check!' : '';
@@ -85,7 +99,12 @@ function showStatus() {
   } else {
     status.textContent = `Draw by ${result.reason}`;
   }
-  if (result) $('band-name').textContent = 'Game over · start a new game to play again';
+  if (browsing()) {
+    $('band-name').textContent =
+      `Viewing move ${viewing} of ${history.length - 1} · ⏭ to return, or reset here`;
+  } else if (result) {
+    $('band-name').textContent = 'Game over · start a new game to play again';
+  }
   status.dataset.turn = state.result ? '' : state.turn;
 }
 
@@ -131,7 +150,7 @@ for (const color of ['white', 'black']) {
   select.addEventListener('change', () => {
     setPlayer(color, select.value);
     // Whoever was asked to move for this side no longer gets a say; ask the new player.
-    if (!state.result && state.turn === color) {
+    if (!browsing() && !live().result && live().turn === color) {
       human.cancel();
       play();
     }
@@ -144,50 +163,82 @@ onSquareTap(
     camera,
     boardView,
     piecesView,
-    squareOfPiece: (id) => state.board.findIndex((p) => p && p.id === id),
+    squareOfPiece: (id) => shown().board.findIndex((p) => p && p.id === id),
   },
   (square) => human.tap(square),
 );
 
+function showPosition({ animate = false } = {}) {
+  notation.show(movesOf(history), live().result, viewing);
+  piecesView.sync(shown().board, { animate });
+  showCaptured();
+  showStatus();
+  showSelection();
+}
+
 async function play() {
   const current = ++game;
-  while (!state.result) {
+  while (!live().result) {
+    const state = live();
     const player = players[state.turn];
     if (player !== human) $('band-name').textContent = `${player.name} is thinking…`;
     const action = await player.chooseAction(state);
     if (current !== game) return;
-    const next = applyAction(state, action);
-    moves = [...moves, notate(state, action, next)];
-    for (const piece of capturedPieces(state.board, next.board)) {
-      const by = opponent(piece.color);
-      captured = { ...captured, [by]: sortByValue([...captured[by], piece]) };
-    }
-    sound.play(soundFor(state, action, next));
-    state = next;
-    notation.show(moves, state.result);
-    piecesView.sync(state.board, { animate: true });
-    showCaptured();
-    showStatus();
-    showSelection();
+    history = recordAction(history, action);
+    viewing = history.length - 1;
+    sound.play(soundFor(state, action, live()));
+    showPosition({ animate: true });
   }
 }
 
-function startGame() {
+// Stops whoever is choosing a move; play() picks up again from the live position.
+function pause() {
+  game++;
   human.cancel();
   for (const player of Object.values(players)) if (player !== human) player.cancel?.();
-  state = newGame();
-  moves = [];
-  captured = { white: [], black: [] };
-  notation.show(moves, null);
-  piecesView.sync(state.board);
-  showCaptured();
-  showStatus();
-  showSelection();
+}
+
+function goTo(index) {
+  index = Math.max(0, Math.min(index, history.length - 1));
+  if (index === viewing) return;
+  const wasLive = !browsing();
+  viewing = index;
+  if (wasLive) pause();
+  showPosition({ animate: true });
+  if (!browsing()) play();
+}
+
+function resetHere() {
+  if (!browsing()) return;
+  history = truncateHistory(history, viewing);
+  showPosition();
   play();
 }
+
+function startGame() {
+  pause();
+  history = startHistory(newGame());
+  viewing = 0;
+  showPosition();
+  play();
+}
+
+const KEY_STEPS = {
+  ArrowLeft: () => goTo(viewing - 1),
+  ArrowRight: () => goTo(viewing + 1),
+  Home: () => goTo(0),
+  End: () => goTo(history.length - 1),
+};
+document.addEventListener('keydown', (event) => {
+  const step = KEY_STEPS[event.key];
+  if (!step || event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.target.closest?.('select, input, textarea')) return;
+  event.preventDefault();
+  step();
+});
 
 $('new-game').addEventListener('click', startGame);
 startGame();
 
 // Lets the screenshot script drive the game without simulating pointer events.
-window.chessir = { tap: (square) => human.tap(square), getState: () => state };
+window.chessir = { tap: (square) => human.tap(square), getState: live, goTo };

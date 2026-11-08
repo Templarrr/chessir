@@ -30,10 +30,19 @@ async function copyText(text) {
   }
 }
 
-/** The side panel with the game's moves; `show(moves, result)` redraws it. */
-export function createNotationPanel({ panel, toggle, list, copy }) {
+/**
+ * The side panel with the game's moves; `show(moves, result, current)` redraws it, with
+ * `current` the number of moves on the board. Clicking a move or a step button asks
+ * `goTo` for that position; "Reset here" asks `resetHere` to drop the moves after it.
+ */
+export function createNotationPanel(
+  { panel, toggle, list, copy, first, back, forward, last, reset },
+  { goTo, resetHere },
+) {
   let text = '';
   let copyTimer = null;
+  let current = 0;
+  let total = 0;
 
   function setOpen(open) {
     panel.classList.toggle('open', open);
@@ -54,30 +63,61 @@ export function createNotationPanel({ panel, toggle, list, copy }) {
     copyTimer = setTimeout(() => (copy.textContent = 'Copy'), 1500);
   });
 
+  first.addEventListener('click', () => goTo(0));
+  back.addEventListener('click', () => goTo(current - 1));
+  forward.addEventListener('click', () => goTo(current + 1));
+  last.addEventListener('click', () => goTo(total));
+  reset.addEventListener('click', () => resetHere());
+
+  function plyCell(moves, index) {
+    if (index >= moves.length) return document.createElement('span');
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.className = 'ply';
+    cell.textContent = moves[index];
+    cell.title = 'Show the board after this move';
+    if (index + 1 === current) cell.classList.add('current');
+    if (index + 1 > current) cell.classList.add('ahead');
+    cell.addEventListener('click', () => goTo(index + 1));
+    return cell;
+  }
+
+  function scrollToCurrent() {
+    const cell = list.querySelector('.current');
+    if (!cell || current === total) {
+      list.scrollTop = list.scrollHeight;
+      return;
+    }
+    const row = cell.parentElement;
+    if (row.offsetTop < list.scrollTop) list.scrollTop = row.offsetTop;
+    const bottom = row.offsetTop + row.offsetHeight;
+    if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+  }
+
   return {
-    show(moves, result) {
+    show(moves, result, shown = moves.length) {
       text = formatMovetext(moves, result);
-      copy.disabled = moves.length === 0;
+      current = shown;
+      total = moves.length;
+      copy.disabled = total === 0;
+      first.disabled = back.disabled = current === 0;
+      forward.disabled = last.disabled = current === total;
+      reset.disabled = current === total;
+      panel.classList.toggle('browsing', current < total);
+
       const rows = [];
       for (let i = 0; i < moves.length; i += 2) {
         const row = document.createElement('li');
-        for (const [cls, content] of [
-          ['num', `${i / 2 + 1}.`],
-          ['ply', moves[i]],
-          ['ply', moves[i + 1] ?? ''],
-        ]) {
-          const cell = document.createElement('span');
-          cell.className = cls;
-          cell.textContent = content;
-          row.append(cell);
-        }
+        const num = document.createElement('span');
+        num.className = 'num';
+        num.textContent = `${i / 2 + 1}.`;
+        row.append(num, plyCell(moves, i), plyCell(moves, i + 1));
         rows.push(row);
       }
-      const last = rows.at(-1)?.querySelectorAll('.ply')[moves.length % 2 === 0 ? 1 : 0];
-      last?.classList.add('last');
       if (result) {
         const row = document.createElement('li');
         row.className = 'result';
+        if (current < total) row.classList.add('ahead');
         row.textContent = resultToken(result);
         rows.push(row);
       }
@@ -88,7 +128,7 @@ export function createNotationPanel({ panel, toggle, list, copy }) {
         rows.push(row);
       }
       list.replaceChildren(...rows);
-      list.scrollTop = list.scrollHeight;
+      scrollToCurrent();
     },
   };
 }
