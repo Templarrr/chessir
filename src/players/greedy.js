@@ -112,7 +112,7 @@ export function createGreedyBot({ thinkMs = 500 } = {}) {
     async chooseAction(state) {
       const started = performance.now();
       const action = chooseGreedyAction(state);
-      // A short pause so the opponent's last move finishes animating and the reply is visible.
+      // A short pause so the reply doesn't land the instant the opponent's move does.
       const wait = thinkMs - (performance.now() - started);
       if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       return action;
